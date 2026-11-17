@@ -112,37 +112,41 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
 
 .intro{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;padding:max(20px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom))}
 .intro .skip{align-self:flex-end;padding:10px 14px;color:var(--muted);font-size:15px}
-.intro .slide{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
-.intro .slide.on{display:flex}
-.intro .slide svg{width:min(62vw,260px);height:auto;margin-bottom:10px}
-.intro h2{font-family:var(--display);font-size:30px;line-height:1.15}
-.intro p{color:var(--muted);max-width:320px;font-size:17px}
-.intro .idots{display:flex;gap:8px;justify-content:center;margin:6px 0 18px}
-.intro .idots i{width:8px;height:8px;border-radius:99px;background:var(--line)}
-.intro .idots i.on{width:24px;background:var(--accent)}
+.splash{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .5s}
+.splash.out{opacity:0}
+.splash svg{width:min(52vw,210px);height:auto}
+.splash .fan{transform-origin:50px 82px;transform:rotate(var(--a));animation:open .9s cubic-bezier(.2,.8,.2,1) both}
+.splash .fan.f2{animation-delay:.1s}.splash .fan.f3{animation-delay:.2s}
+@keyframes open{from{transform:rotate(0deg)}to{transform:rotate(var(--a))}}
+.splash .wm{font-family:var(--display);font-weight:800;font-size:38px;letter-spacing:-.5px;animation:wm .8s .5s both}
+@keyframes wm{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.trial{flex:1;flex-direction:column;justify-content:center;gap:14px}
+.trial h2{font-family:var(--display);font-size:28px;line-height:1.15}
+.trial p.s{color:var(--muted);font-size:16px}
+.trial .tm{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 6px}
+.trial .tm button{padding:10px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface2);font-size:15px}
+.trial .tm button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.trial .tc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;min-height:190px}
+.trial .tc div.card{border-radius:16px;aspect-ratio:2/3;display:flex;align-items:flex-end;padding:10px;font-size:13px;line-height:1.25;font-weight:600;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.trial .ex{font-size:12px;color:var(--muted);min-height:16px}
 </style>
 </head>
 <body>
 <div class="glow" id="glow"></div>
 <div class="intro hide" id="intro" role="dialog" aria-modal="true" aria-label="Filmoda tanıtımı">
-  <button class="skip" id="i-skip">Geç</button>
-  <div class="slide on">
-    <svg viewBox="0 0 200 200" aria-hidden="true"><rect x="30" y="34" width="14" height="40" rx="7" fill="#86AEBD"/><rect x="30" y="80" width="14" height="40" rx="7" fill="#E3B76F"/><rect x="30" y="126" width="14" height="40" rx="7" fill="#E08A9E"/><rect x="56" y="34" width="120" height="40" rx="14" fill="#211A27" stroke="#3A2F45" stroke-width="2"/><rect x="56" y="80" width="120" height="40" rx="14" fill="#211A27" stroke="#3A2F45" stroke-width="2"/><rect x="56" y="126" width="120" height="40" rx="14" fill="#2B2233" stroke="#E08A9E" stroke-width="2"/></svg>
-    <h2>Nasıl hissediyorsun?</h2>
-    <p>Ruh halini, vaktini ve kiminle izleyeceğini seç. Gerisini Filmoda halleder.</p>
+  <button class="skip hide" id="i-skip">Geç</button>
+  <div class="splash" id="i-splash" aria-hidden="true">
+    <svg viewBox="0 0 100 100"><g class="fan f1" style="--a:-20deg"><rect x="35" y="24" width="30" height="48" rx="5" fill="#8E7A99"/></g><g class="fan f2" style="--a:20deg"><rect x="35" y="24" width="30" height="48" rx="5" fill="#F3E9EE"/></g><g class="fan f3" style="--a:0deg"><rect x="35" y="24" width="30" height="48" rx="5" fill="#E08A9E" stroke="#16111A" stroke-width="2.5"/><polygon points="44,40 44,56 57,48" fill="#16111A" stroke="#16111A" stroke-width="4" stroke-linejoin="round"/></g></svg>
+    <div class="wm">Filmoda</div>
   </div>
-  <div class="slide">
-    <svg viewBox="0 0 100 100" aria-hidden="true"><rect x="35" y="24" width="30" height="48" rx="5" fill="#8E7A99" transform="rotate(-20 50 82)"/><rect x="35" y="24" width="30" height="48" rx="5" fill="#F3E9EE" transform="rotate(20 50 82)"/><rect x="35" y="24" width="30" height="48" rx="5" fill="#E08A9E" stroke="#16111A" stroke-width="2.5"/><polygon points="44,40 44,56 57,48" fill="#16111A" stroke="#16111A" stroke-width="4" stroke-linejoin="round"/></svg>
-    <h2>Üç film, tek karar</h2>
-    <p>Saatlerce kaydırmak yok. Sana uyan üç film gelir, nedenini de söyler.</p>
+  <div class="trial hide" id="i-trial" style="display:none">
+    <h2>Dene, nasıl çalıştığını gör</h2>
+    <p class="s">Bir ruh hali seç, örnek önerilere bak.</p>
+    <div class="tm" id="i-moods"></div>
+    <div class="tc" id="i-cards" aria-live="polite"></div>
+    <div class="ex" id="i-ex"></div>
+    <button class="cta" id="i-go">Gerçeğini dene</button>
   </div>
-  <div class="slide">
-    <svg viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="64" fill="#E08A9E"/><polygon points="86,70 86,130 134,100" fill="#2A1520" stroke="#2A1520" stroke-width="8" stroke-linejoin="round"/></svg>
-    <h2>Fragmanı izle, listene ekle</h2>
-    <p>Filmin nerede izlendiğini gör, beğendiklerini listene at, izlediklerini işaretle.</p>
-  </div>
-  <div class="idots" id="idots"><i class="on"></i><i></i><i></i></div>
-  <button class="cta" id="i-next">Devam</button>
 </div>
 
 <div id="app">
@@ -415,17 +419,33 @@ buildChoices();
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
-/* Ilk acilis tanitimi */
+/* Ilk acilis: logo animasyonu + deneme ekrani */
 (function(){
   var ov=document.getElementById("intro");if(!ov)return;
   var done=false;try{done=localStorage.getItem("filmoda_intro")==="1"}catch(e){}
   if(done)return;
-  var sl=ov.querySelectorAll(".slide"),dt=ov.querySelectorAll("#idots i"),nx=document.getElementById("i-next"),i=0;
+  var sp=document.getElementById("i-splash"),tr=document.getElementById("i-trial"),sk=document.getElementById("i-skip");
+  var M=[
+   {ad:"Dinlenmek istiyorum",c:"#86AEBD",l:["Yumuşak bir akşam","Sakin tempo","İçini ısıtır"]},
+   {ad:"Neşeli hissediyorum",c:"#E3B76F",l:["Güldürür","Hafif ve eğlenceli","Arkadaşla izlenir"]},
+   {ad:"Duygusalım",c:"#E08A9E",l:["Dokunaklı hikaye","Gözlerin dolabilir","İyi gelir"]},
+   {ad:"Heyecan istiyorum",c:"#D9755F",l:["Nefes kesen","Tempo hiç düşmez","Gerilim dolu"]},
+   {ad:"Düşünmek istiyorum",c:"#A596D6",l:["Akıl çelen","Sonu şaşırtır","Konuşturur"]}];
+  var tm=document.getElementById("i-moods"),tc=document.getElementById("i-cards"),ex=document.getElementById("i-ex");
+  M.forEach(function(m,i){
+    var b=document.createElement("button");b.type="button";b.textContent=m.ad;b.setAttribute("aria-pressed","false");
+    b.onclick=function(){
+      tm.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed","false")});
+      b.setAttribute("aria-pressed","true");tc.textContent="";
+      m.l.forEach(function(t){var d=document.createElement("div");d.className="card";d.style.background="linear-gradient(160deg,"+m.c+",#2B2233)";d.textContent=t;tc.appendChild(d)});
+      ex.textContent="Bunlar örnek. Gerçek öneriler film arşivinden gelir.";
+    };
+    tm.appendChild(b);
+  });
   function kapat(){ov.classList.add("hide");try{localStorage.setItem("filmoda_intro","1")}catch(e){}}
-  function goster2(){sl.forEach(function(x,k){x.classList.toggle("on",k===i)});dt.forEach(function(x,k){x.classList.toggle("on",k===i)});nx.textContent=i===sl.length-1?"Başlayalım":"Devam"}
-  nx.onclick=function(){if(i<sl.length-1){i++;goster2()}else kapat()};
-  document.getElementById("i-skip").onclick=kapat;
+  document.getElementById("i-go").onclick=kapat;sk.onclick=kapat;
   ov.classList.remove("hide");
+  setTimeout(function(){sp.classList.add("out");setTimeout(function(){sp.style.display="none";tr.style.display="flex";tr.classList.remove("hide");sk.classList.remove("hide")},450)},1900);
 })();
 </script>
 </body>
