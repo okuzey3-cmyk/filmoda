@@ -371,5 +371,6 @@ $("back").onclick=function(){$("step2").classList.add("hide");$("step1").classLi
 buildChoices();
 })();
 </script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}</script>
 </body>
 </html>
