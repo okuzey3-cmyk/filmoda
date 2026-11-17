@@ -191,6 +191,16 @@ var S={mood:null,sure:null,kim:null,seen:[],cur:[]};
 var store={izlenecek:[],izlendi:[]};
 try{var raw=localStorage.getItem("filmoda2");if(raw){var p=JSON.parse(raw);if(p&&p.izlenecek&&p.izlendi)store=p}}catch(e){}
 function save(){try{localStorage.setItem("filmoda2",JSON.stringify(store))}catch(e){}}
+/* TMDB verisi en fazla ~3 ay saklanir: eski kayitlar yeniden cekilir (TMDB sartlari: 6 ay siniri) */
+function tazele(){
+  var simdi=Date.now(),AY3=90*24*3600*1000,degisti=false,isler=[];
+  ["izlenecek","izlendi"].forEach(function(k){store[k].forEach(function(f){
+    if(!f.u){f.u=simdi;degisti=true;return}
+    if(simdi-f.u>AY3)isler.push(tmdb("/movie/"+f.id).then(function(d){f.t=d.title;f.pp=d.poster_path;f.y=(d.release_date||"").slice(0,4);f.v=d.vote_average;f.u=Date.now();degisti=true}).catch(function(){}))
+  })});
+  Promise.all(isler).then(function(){if(degisti)save()});
+}
+tazele();
 
 function $(id){return document.getElementById(id)}
 function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
@@ -306,7 +316,7 @@ function ac(f){
   });
 }
 function detay(d){
-  var sh=$("sheet"),f={id:d.id,t:d.title,pp:d.poster_path,y:yil(d.release_date),v:d.vote_average};
+  var sh=$("sheet"),f={id:d.id,t:d.title,pp:d.poster_path,y:yil(d.release_date),v:d.vote_average,u:Date.now()};
   var hero=sh.querySelector(".hero");
   var bg=d.backdrop_path||d.poster_path;
   hero.innerHTML="";
