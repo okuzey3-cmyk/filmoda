@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16111A">
+<title>Filmoda</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Plan: erik moru zemin, tozlu gül vurgu, şampanya puan rengi, her ruh halinin kendi sönük tonu.
+   Düzen: tek sütun; öneriler büyük afişli, yana kaydırılan kartlar. */
+:root{
+  --bg:#16111A; --surface:#211A27; --surface2:#2B2233; --line:#3A2F45;
+  --text:#EFE8EC; --muted:#A99FB0; --accent:#E08A9E; --accent-ink:#2A1520; --gold:#D9B98B;
+  --m-sakin:#86AEBD; --m-neseli:#E3B76F; --m-duygusal:#E08A9E; --m-heyecan:#D9755F; --m-dusunce:#A596D6;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#app{max-width:520px;margin:0 auto;min-height:100vh}
+main{padding:calc(22px + env(safe-area-inset-top)) 18px 120px}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.brand{font-family:var(--display);font-weight:700;font-size:20px;color:var(--accent);display:flex;align-items:center;gap:8px;margin-bottom:22px}
+.brand i{width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block}
+h1{font-size:34px;line-height:1.1;margin-bottom:6px}
+.sub{color:var(--muted);margin-bottom:22px}
+.label{font-size:13px;color:var(--muted);margin:22px 0 10px;font-weight:600;letter-spacing:.02em}
+.moods{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mood{--c:var(--accent);text-align:left;padding:16px;border-radius:20px;background:var(--surface);border:1.5px solid var(--line);min-height:96px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;transition:transform .15s,border-color .15s,background .15s}
+.mood:active{transform:scale(.98)}
+.mood b{font-family:var(--display);font-size:18px;font-weight:700;line-height:1.15}
+.mood span{font-size:13px;color:var(--muted)}
+.mood .dot{width:26px;height:26px;border-radius:50%;background:var(--c);opacity:.9;box-shadow:0 0 22px color-mix(in srgb,var(--c) 45%,transparent)}
+.mood[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--surface))}
+.mood:last-child:nth-child(odd){grid-column:1/-1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:10px 16px;border-radius:999px;background:var(--surface);border:1.5px solid var(--line);font-size:15px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.cta{width:100%;margin-top:28px;padding:16px;border-radius:18px;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:18px}
+.cta:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed}
+.cta.ghost{background:transparent;border:1.5px solid var(--line);color:var(--text);margin-top:12px}
+/* Sonuc: yana kayan afis kartlari */
+.glow{position:fixed;inset:0 0 auto 0;height:60%;pointer-events:none;z-index:0;opacity:.0;transition:opacity .5s;background:radial-gradient(70% 60% at 50% 0%,var(--g,#E08A9E),transparent 70%)}
+.glow.on{opacity:.22}
+#v-oner,#v-liste{position:relative;z-index:1}
+.rail{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -18px;padding:6px 18px 14px;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.card{flex:0 0 74%;scroll-snap-align:center;text-align:left;animation:rise .45s ease both}
+.card:nth-child(2){animation-delay:.07s}.card:nth-child(3){animation-delay:.14s}
+@keyframes rise{from{transform:translateY(12px)}to{transform:none}}
+.pwrap{position:relative;aspect-ratio:2/3;border-radius:22px;overflow:hidden;background:var(--surface2);box-shadow:0 18px 40px -18px color-mix(in srgb,var(--h,#E08A9E) 70%,#000),0 0 0 1px rgba(255,255,255,.06)}
+.pwrap img{width:100%;height:100%;object-fit:cover;display:block}
+.pwrap .fb{position:absolute;inset:0;display:flex;align-items:flex-end;padding:16px;background:linear-gradient(165deg,color-mix(in srgb,var(--h,#E08A9E) 55%,#16111A),#16111A 85%);font-family:var(--display);font-weight:700;font-size:22px;line-height:1.1}
+.badge{position:absolute;top:12px;right:12px;padding:5px 10px;border-radius:999px;background:rgba(22,17,26,.78);backdrop-filter:blur(6px);color:var(--gold);font-weight:600;font-size:14px}
+.card h3{font-size:20px;line-height:1.2;margin:12px 4px 3px}
+.meta{font-size:13px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin:0 4px}
+.why{font-size:14px;margin:6px 4px 0;opacity:.92}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:2px}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--accent);width:18px;border-radius:4px}
+.note{margin-top:18px;font-size:12px;color:var(--muted)}
+.msg{padding:22px 18px;border:1.5px dashed var(--line);border-radius:20px;color:var(--muted);text-align:center;margin-top:8px}
+.skeleton{flex:0 0 74%;aspect-ratio:2/3.5;border-radius:22px;background:linear-gradient(110deg,var(--surface) 30%,var(--surface2) 50%,var(--surface) 70%);background-size:200% 100%;animation:sh 1.3s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:4;background:color-mix(in srgb,var(--bg) 90%,transparent);border-top:1px solid var(--line);backdrop-filter:blur(12px)}
+nav div{max-width:520px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;padding:8px 18px calc(10px + env(safe-area-inset-bottom))}
+nav button{padding:10px;border-radius:14px;color:var(--muted);font-weight:600;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button[aria-current="page"]{color:var(--accent)}
+nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.empty{padding:28px 18px;border:1.5px dashed var(--line);border-radius:20px;color:var(--muted);text-align:center}
+.row{display:flex;align-items:center;gap:12px;padding:10px;border-radius:18px;background:var(--surface);border:1.5px solid var(--line);margin-bottom:10px;width:100%;text-align:left}
+.row .th{width:52px;flex:none;aspect-ratio:2/3;border-radius:10px;overflow:hidden;background:var(--surface2)}
+.row .th img{width:100%;height:100%;object-fit:cover;display:block}
+.row div.t{flex:1;min-width:0}
+.row h3{font-size:16px}
+.about{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.about a{color:var(--accent)}
+/* Detay sayfasi */
+.scrim{position:fixed;inset:0;background:rgba(10,6,12,.66);display:none;z-index:5}
+.scrim.on{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:6;max-width:520px;margin:0 auto;max-height:92%;overflow:auto;background:var(--surface);border-radius:26px 26px 0 0;transform:translateY(105%);transition:transform .28s ease;border-top:1px solid var(--line)}
+.sheet.on{transform:none}
+.hero{position:relative;aspect-ratio:16/10;background:var(--surface2);overflow:hidden}
+.hero img{width:100%;height:100%;object-fit:cover;display:block}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(33,26,39,0) 35%,var(--surface))}
+.sbody{padding:0 20px calc(24px + env(safe-area-inset-bottom));margin-top:-34px;position:relative;z-index:1}
+.sheet h2{font-size:28px;line-height:1.1;margin-bottom:8px}
+.genres{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}
+.genres span{padding:4px 11px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--muted)}
+.sheet p.ov{opacity:.94;margin-bottom:18px}
+.plat{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.plat span{padding:6px 12px;border-radius:10px;background:var(--surface2);font-size:13px}
+.src{font-size:11px;color:var(--muted);margin-bottom:18px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btns a,.btns button{padding:14px;border-radius:16px;text-align:center;font-weight:600;text-decoration:none;border:1.5px solid var(--line);background:var(--surface2)}
+.btns .main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.close{position:absolute;right:14px;top:14px;z-index:2;width:38px;height:38px;border-radius:50%;background:rgba(22,17,26,.7);backdrop-filter:blur(6px);font-size:18px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="glow" id="glow"></div>
+<div id="app">
+<main id="main">
+
+<section id="v-oner">
+  <div class="brand"><i></i>Filmoda</div>
+
+  <div id="step1">
+    <h1>Bu akşam nasılsın?</h1>
+    <p class="sub">Birkaç şey söyle, sana üç film seçelim.</p>
+    <div class="moods" id="moods"></div>
+    <div class="label">Ne kadar vaktin var?</div>
+    <div class="chips" id="sure"></div>
+    <div class="label">Kiminle izleyeceksin?</div>
+    <div class="chips" id="kim"></div>
+    <button class="cta" id="go" disabled>Filmleri getir</button>
+  </div>
+
+  <div id="step2" class="hide">
+    <h1 id="rtitle"></h1>
+    <p class="sub" id="rsub"></p>
+    <div class="rail" id="rail"></div>
+    <div class="dots" id="dots"></div>
+    <button class="cta ghost" id="again">Başka öner</button>
+    <button class="cta ghost" id="back">Ruh halini değiştir</button>
+  </div>
+</section>
+
+<section id="v-liste" class="hide">
+  <div class="brand"><i></i>Listem</div>
+  <div class="tabs">
+    <button class="chip" id="t-izlenecek" aria-pressed="true">İzleyeceklerim</button>
+    <button class="chip" id="t-izlendi" aria-pressed="false">İzlediklerim</button>
+  </div>
+  <div id="liste"></div>
+  <div class="about">
+    Bu uygulama TMDB API'sini kullanır, ancak TMDB tarafından onaylanmamış veya sertifikalandırılmamıştır. Film bilgileri ve görselleri TMDB'den, yayın platformu bilgisi JustWatch'tan gelir.<br>
+    <a href="privacy.html">Gizlilik politikası</a>
+  </div>
+</section>
+
+</main>
+<nav><div>
+  <button id="n-oner" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg>Öner</button>
+  <button id="n-liste"><svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Listem</button>
+</div></nav>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Film detayı"></aside>
+
+<script>
+(function(){
+"use strict";
+var KEY="91a5fe677d52ce465948f464c3cfd53b";
+var API="https://api.themoviedb.org/3";
+var IMG="https://image.tmdb.org/t/p/";
+
+var MOODS=[
+ {id:"sakin",ad:"Dinlenmek istiyorum",alt:"Sakin, yumuşak",c:"#86AEBD",g:"16|10751|10749|14"},
+ {id:"neseli",ad:"Neşeli hissediyorum",alt:"Güldürsün, ısıtsın",c:"#E3B76F",g:"35|12"},
+ {id:"duygusal",ad:"Duygusalım",alt:"Dokunsun, iyi gelsin",c:"#E08A9E",g:"18|10749"},
+ {id:"heyecan",ad:"Heyecan istiyorum",alt:"Nefes kesen",c:"#D9755F",g:"28|53|9648"},
+ {id:"dusunce",ad:"Düşünmek istiyorum",alt:"Akıl çelen",c:"#A596D6",g:"878|9648|53"}
+];
+var SURE=[{id:"kisa",ad:"1,5 saatten kısa",max:100},{id:"orta",ad:"2 saate kadar",max:125},{id:"fark",ad:"Fark etmez",max:0}];
+var KIM=[{id:"tek",ad:"Tek başıma"},{id:"iki",ad:"İki kişi"},{id:"aile",ad:"Aile ile"}];
+var NEDEN={
+ sakin:["Yorgun bir akşama yumuşak gelir.","Telaşsız, içi rahatlatan bir seçim.","Koltuğa gömülüp izlemelik."],
+ neseli:["Keyfini yerine getirir.","Gülümseyerek bitireceksin.","Hafif ve eğlenceli."],
+ duygusal:["Duygularına iyi gelecek bir hikâye.","İzledikten sonra bir süre aklında kalır.","İçini ısıtırken dokunur."],
+ heyecan:["Sakin oturtmaz, seni içine çeker.","Tempo hiç düşmüyor.","Gerilimi sonuna kadar taşır."],
+ dusunce:["Bittikten sonra da konuşulacak bir film.","Zihnini oyalayan bir kurgu.","İzlerken düşündürür."]
+};
+
+var S={mood:null,sure:null,kim:null,seen:[],cur:[]};
+var store={izlenecek:[],izlendi:[]};
+try{var raw=localStorage.getItem("filmoda2");if(raw){var p=JSON.parse(raw);if(p&&p.izlenecek&&p.izlendi)store=p}}catch(e){}
+function save(){try{localStorage.setItem("filmoda2",JSON.stringify(store))}catch(e){}}
+
+function $(id){return document.getElementById(id)}
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function moodOf(id){return MOODS.filter(function(m){return m.id===id})[0]}
+function inList(k,id){return store[k].some(function(x){return x.id===id})}
+function sureText(dk){if(!dk)return"";var s=Math.floor(dk/60),d=dk%60;return s?s+" sa "+d+" dk":d+" dk"}
+function yil(d){return d?String(d).slice(0,4):""}
+
+/* TMDb */
+function tmdb(path,params){
+  var u=new URL(API+path);u.searchParams.set("api_key",KEY);u.searchParams.set("language","tr-TR");
+  Object.keys(params||{}).forEach(function(k){u.searchParams.set(k,params[k])});
+  return fetch(u.toString()).then(function(r){if(!r.ok)throw new Error("http "+r.status);return r.json()});
+}
+
+/* Gorseller (yoksa renkli yedek) */
+function posterEl(f,h){
+  var w=el("div","pwrap");w.style.setProperty("--h",h||"#E08A9E");
+  if(f.poster_path||f.pp){
+    var im=new Image();im.alt=f.title||f.t||"";im.loading="lazy";im.src=IMG+"w500"+(f.poster_path||f.pp);
+    im.onerror=function(){im.remove();w.appendChild(el("div","fb",esc(f.title||f.t)))};
+    w.appendChild(im);
+  }else w.appendChild(el("div","fb",esc(f.title||f.t)));
+  return w;
+}
+
+/* Secimler */
+function buildChoices(){
+  var mw=$("moods");
+  MOODS.forEach(function(m){
+    var b=el("button","mood",'<div class="dot"></div><div><b>'+m.ad+'</b><br><span>'+m.alt+'</span></div>');
+    b.style.setProperty("--c",m.c);b.setAttribute("aria-pressed","false");
+    b.onclick=function(){S.mood=m.id;[].forEach.call(mw.children,function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");check()};
+    mw.appendChild(b)});
+  chipRow($("sure"),SURE,"sure");chipRow($("kim"),KIM,"kim");
+}
+function chipRow(box,list,key){
+  list.forEach(function(o){
+    var b=el("button","chip",o.ad);b.setAttribute("aria-pressed","false");
+    b.onclick=function(){S[key]=o.id;[].forEach.call(box.children,function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");check()};
+    box.appendChild(b)});
+}
+function check(){$("go").disabled=!(S.mood&&S.sure&&S.kim)}
+
+/* Oneri */
+function params(){
+  var m=moodOf(S.mood),max=SURE.filter(function(s){return s.id===S.sure})[0].max;
+  var p={sort_by:"popularity.desc","vote_count.gte":"1500","vote_average.gte":"7",include_adult:"false",without_genres:"27,10770",with_genres:m.g,page:String(1+Math.floor(Math.random()*8))};
+  if(max)p["with_runtime.lte"]=String(max);
+  if(S.kim==="aile"){p.with_genres="10751|16";p["vote_count.gte"]="800"}
+  return p;
+}
+function oneri(){
+  return tmdb("/discover/movie",params()).then(function(d){
+    var gor=store.izlendi.map(function(x){return x.id});
+    var liste=(d.results||[]).filter(function(f){return f.poster_path&&gor.indexOf(f.id)<0&&S.seen.indexOf(f.id)<0});
+    if(liste.length<3){S.seen=[];liste=(d.results||[]).filter(function(f){return f.poster_path&&gor.indexOf(f.id)<0})}
+    for(var i=liste.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=liste[i];liste[i]=liste[j];liste[j]=t}
+    return liste.slice(0,3);
+  });
+}
+function goster(){
+  var m=moodOf(S.mood);
+  $("step1").classList.add("hide");$("step2").classList.remove("hide");window.scrollTo(0,0);
+  $("rtitle").textContent=m.ad+".";
+  var k=KIM.filter(function(x){return x.id===S.kim})[0].ad;
+  $("rsub").textContent="Bu akşam için üç seçim. "+k+", "+SURE.filter(function(x){return x.id===S.sure})[0].ad.toLowerCase()+".";
+  var g=$("glow");g.style.setProperty("--g",m.c);g.classList.add("on");
+  var rail=$("rail");rail.innerHTML="";$("dots").innerHTML="";
+  rail.appendChild(el("div","skeleton"));rail.appendChild(el("div","skeleton"));
+  $("again").disabled=true;
+  oneri().then(function(list){
+    $("again").disabled=false;rail.innerHTML="";
+    if(!list.length){rail.appendChild(el("div","msg","Bu seçimlere uyan film bulamadık. Süreyi ya da ruh halini değiştirip tekrar dene."));return}
+    S.cur=list;
+    list.forEach(function(f,i){
+      S.seen.push(f.id);
+      var c=el("button","card");c.setAttribute("aria-label",f.title);
+      var pw=posterEl(f,m.c);pw.appendChild(el("div","badge","★ "+(f.vote_average||0).toFixed(1)));
+      c.appendChild(pw);
+      c.appendChild(el("h3",null,esc(f.title)));
+      c.appendChild(el("div","meta","<span>"+yil(f.release_date)+"</span>"));
+      c.appendChild(el("p","why",esc(NEDEN[S.mood][i%3])));
+      c.onclick=function(){ac(f)};
+      rail.appendChild(c);
+    });
+    if(S.seen.length>30)S.seen=S.seen.slice(-12);
+    var dots=$("dots");list.forEach(function(_,i){dots.appendChild(el("i",i===0?"on":""))});
+    rail.scrollLeft=0;
+  }).catch(function(){
+    $("again").disabled=false;rail.innerHTML="";
+    rail.appendChild(el("div","msg","Filmler şu an yüklenemedi. İnternet bağlantını kontrol edip \"Başka öner\"e bas."));
+  });
+}
+$("rail").addEventListener("scroll",function(){
+  var r=$("rail"),cards=r.querySelectorAll(".card");if(!cards.length)return;
+  var mid=r.scrollLeft+r.clientWidth/2,best=0,bd=1e9;
+  [].forEach.call(cards,function(c,i){var d=Math.abs(c.offsetLeft+c.offsetWidth/2-mid);if(d<bd){bd=d;best=i}});
+  [].forEach.call($("dots").children,function(d,i){d.className=i===best?"on":""});
+});
+
+/* Detay */
+function ac(f){
+  var sh=$("sheet");
+  sh.innerHTML='<button class="close" id="cl" aria-label="Kapat">✕</button><div class="hero"></div><div class="sbody"><h2>'+esc(f.title||f.t)+'</h2><p class="ov" style="opacity:.6">Yükleniyor…</p></div>';
+  $("scrim").classList.add("on");sh.classList.add("on");$("cl").onclick=kapat;$("cl").focus();
+  tmdb("/movie/"+f.id,{append_to_response:"videos,watch/providers",include_video_language:"tr,en,null"}).then(function(d){
+    return (d.overview?Promise.resolve(d):fetch(API+"/movie/"+f.id+"?language=en-US&api_key="+KEY).then(function(r){return r.json()}).then(function(e){d.overview=e.overview||"";return d})).then(detay);
+  }).catch(function(){
+    var b=sh.querySelector(".sbody p.ov");if(b)b.textContent="Ayrıntılar yüklenemedi. İnternet bağlantını kontrol et.";
+  });
+}
+function detay(d){
+  var sh=$("sheet"),f={id:d.id,t:d.title,pp:d.poster_path,y:yil(d.release_date),v:d.vote_average};
+  var hero=sh.querySelector(".hero");
+  var bg=d.backdrop_path||d.poster_path;
+  hero.innerHTML="";
+  if(bg){var im=new Image();im.alt="";im.src=IMG+"w780"+bg;im.onerror=function(){im.remove()};hero.appendChild(im)}
+  var tr=(d["watch/providers"]&&d["watch/providers"].results&&d["watch/providers"].results.TR)||null;
+  var names=[];
+  if(tr){["flatrate","rent","buy"].forEach(function(k){(tr[k]||[]).forEach(function(p){if(names.indexOf(p.provider_name)<0)names.push(p.provider_name)})})}
+  var vids=(d.videos&&d.videos.results)||[];
+  var tv=vids.filter(function(v){return v.site==="YouTube"&&v.type==="Trailer"});
+  var tvt=tv.filter(function(v){return v.iso_639_1==="tr"})[0]||tv[0]||vids.filter(function(v){return v.site==="YouTube"})[0];
+  var link=tvt?"https://www.youtube.com/watch?v="+tvt.key:"https://www.youtube.com/results?search_query="+encodeURIComponent(d.title+" "+yil(d.release_date)+" fragman");
+  var inL=inList("izlenecek",d.id),seen=inList("izlendi",d.id);
+  var genres=(d.genres||[]).map(function(g){return "<span>"+esc(g.name)+"</span>"}).join("");
+  sh.querySelector(".sbody").innerHTML=
+   '<h2>'+esc(d.title)+'</h2>'+
+   '<div class="meta" style="margin:0"><span style="color:var(--gold);font-weight:600">★ '+(d.vote_average||0).toFixed(1)+'</span><span>'+yil(d.release_date)+'</span>'+(d.runtime?'<span>'+sureText(d.runtime)+'</span>':'')+'</div>'+
+   '<div class="genres">'+genres+'</div>'+
+   '<p class="ov">'+(esc(d.overview)||"Bu film için özet bulunamadı.")+'</p>'+
+   '<div class="label" style="margin-top:0">Nerede izlenir</div>'+
+   '<div class="plat">'+(names.length?names.map(function(n){return "<span>"+esc(n)+"</span>"}).join(""):"<span>Türkiye için bilgi yok</span>")+'</div>'+
+   '<div class="src">Yayın bilgisi: JustWatch</div>'+
+   '<div class="btns"><a href="'+link+'" target="_blank" rel="noopener">Fragmanı izle</a><button class="main" id="ad">'+(inL?"Listemde ✓":"Listeme ekle")+'</button></div>'+
+   '<button class="cta ghost" id="iz">'+(seen?"İzledim ✓":"İzledim olarak işaretle")+'</button>';
+  $("ad").onclick=function(){toggle("izlenecek",f);ac2(d)};
+  $("iz").onclick=function(){toggle("izlendi",f);if(inList("izlendi",f.id))remove("izlenecek",f.id);ac2(d)};
+}
+function ac2(d){detay(d)}
+function remove(k,id){store[k]=store[k].filter(function(x){return x.id!==id});save()}
+function toggle(k,f){if(inList(k,f.id))remove(k,f.id);else{store[k].push(f);save()}}
+function kapat(){$("scrim").classList.remove("on");$("sheet").classList.remove("on");renderListe()}
+$("scrim").onclick=kapat;
+document.addEventListener("keydown",function(e){if(e.key==="Escape")kapat()});
+
+/* Liste */
+var tab="izlenecek";
+function renderListe(){
+  var box=$("liste");box.innerHTML="";var arr=store[tab];
+  if(!arr.length){box.appendChild(el("div","empty",tab==="izlenecek"?"Henüz bir film eklemedin. Öner sekmesinden bir film seç, \"Listeme ekle\" de.":"İzlediğin filmleri burada göreceksin."));return}
+  arr.slice().reverse().forEach(function(f){
+    var b=el("button","row");
+    var th=el("div","th");if(f.pp){var im=new Image();im.alt="";im.loading="lazy";im.src=IMG+"w185"+f.pp;im.onerror=function(){im.remove()};th.appendChild(im)}
+    b.appendChild(th);
+    b.appendChild(el("div","t",'<h3>'+esc(f.t)+'</h3><div class="meta" style="margin:2px 0 0"><span style="color:var(--gold);font-weight:600">★ '+(f.v||0).toFixed(1)+'</span><span>'+esc(f.y)+'</span></div>'));
+    b.onclick=function(){ac({id:f.id,title:f.t})};box.appendChild(b)});
+}
+function setTab(t){tab=t;$("t-izlenecek").setAttribute("aria-pressed",t==="izlenecek");$("t-izlendi").setAttribute("aria-pressed",t==="izlendi");renderListe()}
+$("t-izlenecek").onclick=function(){setTab("izlenecek")};
+$("t-izlendi").onclick=function(){setTab("izlendi")};
+
+/* Gezinme */
+function view(v){
+  $("v-oner").classList.toggle("hide",v!=="oner");$("v-liste").classList.toggle("hide",v!=="liste");
+  $("n-oner").setAttribute("aria-current",v==="oner"?"page":"false");$("n-liste").setAttribute("aria-current",v==="liste"?"page":"false");
+  if(v==="liste")renderListe();window.scrollTo(0,0);
+}
+$("n-oner").onclick=function(){view("oner")};
+$("n-liste").onclick=function(){view("liste")};
+$("go").onclick=goster;
+$("again").onclick=goster;
+$("back").onclick=function(){$("step2").classList.add("hide");$("step1").classList.remove("hide");$("glow").classList.remove("on");window.scrollTo(0,0)};
+
+buildChoices();
+})();
+</script>
+</body>
+</html>
