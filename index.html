@@ -376,9 +376,54 @@ function detay(d){
    '<div class="plat">'+(names.length?names.map(function(n){return "<span>"+esc(n)+"</span>"}).join(""):"<span>Türkiye için bilgi yok</span>")+'</div>'+
    '<div class="src">Yayın bilgisi: JustWatch</div>'+
    '<div class="btns"><a href="'+link+'" target="_blank" rel="noopener">Fragmanı izle</a><button class="main" id="ad">'+(inL?"Listemde ✓":"Listeme ekle")+'</button></div>'+
-   '<button class="cta ghost" id="iz">'+(seen?"İzledim ✓":"İzledim olarak işaretle")+'</button>';
+   '<button class="cta ghost" id="iz">'+(seen?"İzledim ✓":"İzledim olarak işaretle")+'</button>'+
+   '<button class="cta ghost" id="pa">Arkadaşına gönder</button>';
   $("ad").onclick=function(){toggle("izlenecek",f);ac2(d)};
   $("iz").onclick=function(){toggle("izlendi",f);if(inList("izlendi",f.id))remove("izlenecek",f.id);ac2(d)};
+  $("pa").onclick=function(){paylas(d,names)};
+}
+
+/* Paylasim karti: afissiz, sadece yazi ve logo (telif icin) */
+var SITE="https://okuzey3-cmyk.github.io/filmoda/";
+function kartCiz(d){
+  var W=1080,H=1350,c=document.createElement("canvas");c.width=W;c.height=H;var x=c.getContext("2d");
+  x.fillStyle="#16111A";x.fillRect(0,0,W,H);
+  var g=x.createRadialGradient(W*0.8,H*0.12,40,W*0.8,H*0.12,820);g.addColorStop(0,"rgba(224,138,158,0.38)");g.addColorStop(1,"rgba(22,17,26,0)");x.fillStyle=g;x.fillRect(0,0,W,H);
+  var F='"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif';
+  x.textBaseline="alphabetic";x.fillStyle="#E08A9E";x.font="600 40px "+F;x.fillText("Bu akşam Filmoda'nın seçtiği film",90,200);
+  x.fillStyle="#EFE8EC";x.font="800 112px "+F;
+  var words=(d.title||"").split(" "),lines=[],cur="";
+  words.forEach(function(w){var t=cur?cur+" "+w:w;if(x.measureText(t).width>W-180&&cur){lines.push(cur);cur=w}else cur=t});
+  if(cur)lines.push(cur);lines=lines.slice(0,4);
+  var y=360;lines.forEach(function(l){x.fillText(l,90,y);y+=128});
+  y+=20;x.fillStyle="#D9B98B";x.font="600 52px "+F;
+  var meta="★ "+(d.vote_average||0).toFixed(1)+"   "+yil(d.release_date)+(d.runtime?"   "+sureText(d.runtime):"");
+  x.fillText(meta,90,y);
+  var gn=(d.genres||[]).slice(0,3).map(function(q){return q.name}).join(" · ");
+  if(gn){x.fillStyle="#A99FB0";x.font="400 44px "+F;x.fillText(gn,90,y+80)}
+  // logo: uc kart
+  var lx=170,ly=H-150;
+  x.save();x.translate(lx,ly);
+  var k=1.0;
+  function k2(ang,col,stroke){x.save();x.rotate(ang*Math.PI/180);x.beginPath();x.roundRect(-45,-150,90,144,14);x.fillStyle=col;x.fill();if(stroke){x.lineWidth=6;x.strokeStyle="#16111A";x.stroke()}x.restore()}
+  k2(-20,"#8E7A99");k2(20,"#F3E9EE");k2(0,"#E08A9E",true);
+  x.beginPath();x.moveTo(-14,-100);x.lineTo(-14,-52);x.lineTo(26,-76);x.closePath();x.fillStyle="#16111A";x.lineJoin="round";x.lineWidth=10;x.strokeStyle="#16111A";x.stroke();x.fill();
+  x.restore();
+  x.fillStyle="#EFE8EC";x.font="800 72px "+F;x.fillText("Filmoda",260,H-150);
+  x.fillStyle="#A99FB0";x.font="400 34px "+F;x.fillText("okuzey3-cmyk.github.io/filmoda",262,H-100);
+  return c;
+}
+function paylas(d,names){
+  var metin='Bu akşam "'+d.title+'" izleyelim mi? '+SITE;
+  var c;try{c=kartCiz(d)}catch(e){c=null}
+  function sadeceMetin(){if(navigator.share)navigator.share({text:metin}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(metin)}
+  if(!c||!c.toBlob){sadeceMetin();return}
+  c.toBlob(function(b){
+    if(!b){sadeceMetin();return}
+    var file=new File([b],"filmoda-"+d.id+".png",{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],text:metin}).catch(function(){})}
+    else{var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=file.name;document.body.appendChild(a);a.click();a.remove()}
+  },"image/png");
 }
 function ac2(d){detay(d)}
 function remove(k,id){store[k]=store[k].filter(function(x){return x.id!==id});save()}
