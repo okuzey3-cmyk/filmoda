@@ -508,7 +508,7 @@ $("q").addEventListener("input",function(){clearTimeout(qt);qt=setTimeout(ara,35
 $("q").addEventListener("keydown",function(e){if(e.key==="Enter"){clearTimeout(qt);ara();$("q").blur()}});
 
 /* Geri bildirim: e-posta adresi belirlenince buraya yazılacak */
-var MAIL="";
+var MAIL="filmodadestek@gmail.com";
 if(MAIL){var fb=$("fb");fb.href="mailto:"+MAIL+"?subject="+encodeURIComponent("Filmoda geri bildirim");fb.hidden=false}
 $("go").onclick=goster;
 $("again").onclick=goster;
