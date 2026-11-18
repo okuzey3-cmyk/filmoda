@@ -339,12 +339,9 @@ function goster(){
   var rail=$("rail");rail.innerHTML="";$("dots").innerHTML="";
   rail.appendChild(el("div","skeleton"));rail.appendChild(el("div","skeleton"));
   $("again").disabled=true;
-  oneri().then(function(list){
-    $("again").disabled=false;rail.innerHTML="";
-    if(!list.length){rail.appendChild(el("div","msg","Bu seçimlere uyan film bulamadık. Süreyi ya da ruh halini değiştirip tekrar dene."));return}
+  function ciz(list){
     S.cur=list;
     list.forEach(function(f,i){
-      S.seen.push(f.id);
       var c=el("button","card");c.setAttribute("aria-label",f.title);
       var pw=posterEl(f,m.c);pw.appendChild(el("div","badge","★ "+(f.vote_average||0).toFixed(1)));
       c.appendChild(pw);
@@ -354,12 +351,23 @@ function goster(){
       c.onclick=function(){ac(f)};
       rail.appendChild(c);
     });
-    if(S.seen.length>30)S.seen=S.seen.slice(-12);
-    var dots=$("dots");list.forEach(function(_,i){dots.appendChild(el("i",i===0?"on":""))});
+    var dots=$("dots");dots.innerHTML="";list.forEach(function(_,i){dots.appendChild(el("i",i===0?"on":""))});
     rail.scrollLeft=0;
+  }
+  oneri().then(function(list){
+    $("again").disabled=false;rail.innerHTML="";
+    if(!list.length){rail.appendChild(el("div","msg","Bu seçimlere uyan film bulamadık. Süreyi ya da ruh halini değiştirip tekrar dene."));return}
+    list.forEach(function(f){S.seen.push(f.id)});
+    ciz(list);
+    try{localStorage.setItem("filmoda_son",JSON.stringify({mood:S.mood,list:list}))}catch(e){}
+    if(S.seen.length>30)S.seen=S.seen.slice(-12);
   }).catch(function(){
     $("again").disabled=false;rail.innerHTML="";
-    rail.appendChild(el("div","msg","Filmler şu an yüklenemedi. İnternet bağlantını kontrol edip \"Başka öner\"e bas."));
+    var son=null;try{son=JSON.parse(localStorage.getItem("filmoda_son")||"null")}catch(e){}
+    var box=el("div","msg","Filmler şu an yüklenemedi. İnternet bağlantını kontrol et.");
+    var b=el("button","cta","Tekrar dene");b.style.marginTop="14px";b.onclick=goster;
+    box.appendChild(b);rail.appendChild(box);
+    if(son&&son.list&&son.list.length){var t=el("div","msg","Son önerilerin:");t.style.display="none";ciz(son.list)}
   });
 }
 $("rail").addEventListener("scroll",function(){
