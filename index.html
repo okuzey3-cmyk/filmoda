@@ -106,6 +106,11 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
 .plat{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
 .plat span{padding:6px 12px;border-radius:10px;background:var(--surface2);font-size:13px}
 .src{font-size:11px;color:var(--muted);margin-bottom:18px}
+.trl{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:16px}
+.trl .close{position:absolute;top:14px;right:14px}
+.trbox{width:100%;max-width:720px;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden}
+.trbox iframe{width:100%;height:100%;border:0}
+.trlink{color:#fff;opacity:.8;font-size:14px}
 .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .btns a,.btns button{padding:14px;border-radius:16px;text-align:center;font-weight:600;text-decoration:none;border:1.5px solid var(--line);background:var(--surface2)}
 .btns .main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -387,9 +392,10 @@ function detay(d){
    '<div class="label" style="margin-top:0">Nerede izlenir</div>'+
    '<div class="plat">'+(names.length?names.map(function(n){return "<span>"+esc(n)+"</span>"}).join(""):"<span>Türkiye için bilgi yok</span>")+'</div>'+
    '<div class="src">Yayın bilgisi: JustWatch</div>'+
-   '<div class="btns"><a href="'+link+'" target="_blank" rel="noopener">Fragmanı izle</a><button class="main" id="ad">'+(inL?"Listemde ✓":"Listeme ekle")+'</button></div>'+
+   '<div class="btns">'+(tvt?'<button id="fr">Fragmanı izle</button>':'<a href="'+link+'" target="_blank" rel="noopener">Fragmanı izle</a>')+'<button class="main" id="ad">'+(inL?"Listemde ✓":"Listeme ekle")+'</button></div>'+
    '<button class="cta ghost" id="iz">'+(seen?"İzledim ✓":"İzledim olarak işaretle")+'</button>'+
    '<button class="cta ghost" id="pa">Arkadaşına gönder</button>';
+  if(tvt&&$("fr"))$("fr").onclick=function(){fragman(tvt.key,link)};
   $("ad").onclick=function(){toggle("izlenecek",f);ac2(d)};
   $("iz").onclick=function(){toggle("izlendi",f);if(inList("izlendi",f.id))remove("izlenecek",f.id);ac2(d)};
   $("pa").onclick=function(){paylas(d,names)};
@@ -445,7 +451,22 @@ function kapat(){
   $("scrim").classList.remove("on");$("sheet").classList.remove("on");renderListe();
   if(acik&&history.state&&history.state.sheet)history.back();
 }
+/* Fragman oynatici (uygulama icinde, YouTube gomme) */
+function fragman(key,link){
+  fragKapat(true);
+  var o=el("div","trl");o.id="trl";
+  o.innerHTML='<button class="close" id="trc" aria-label="Kapat">✕</button><div class="trbox"><iframe src="https://www.youtube-nocookie.com/embed/'+encodeURIComponent(key)+'?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="Fragman"></iframe></div><a class="trlink" href="'+link+'" target="_blank" rel="noopener">Oynamıyorsa YouTube\'da aç</a>';
+  document.body.appendChild(o);
+  $("trc").onclick=function(){fragKapat()};
+  history.pushState({tr:1},"");
+}
+function fragKapat(sessiz){
+  var o=$("trl");if(!o)return;
+  o.remove();
+  if(!sessiz&&history.state&&history.state.tr)history.back();
+}
 window.addEventListener("popstate",function(){
+  if($("trl")){$("trl").remove();return}
   if($("sheet").classList.contains("on")){$("scrim").classList.remove("on");$("sheet").classList.remove("on");renderListe()}
 });
 $("scrim").onclick=kapat;
