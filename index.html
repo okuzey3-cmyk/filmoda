@@ -106,11 +106,20 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
 .plat{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
 .plat span{padding:6px 12px;border-radius:10px;background:var(--surface2);font-size:13px}
 .src{font-size:11px;color:var(--muted);margin-bottom:18px}
-.trl{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:16px}
-.trl .close{position:absolute;top:14px;right:14px}
-.trbox{width:100%;max-width:720px;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden}
+.trl{position:fixed;inset:0;z-index:20;background:#0b080d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px;animation:trin .3s ease}
+.trbg{position:absolute;inset:0;background:var(--bd) center/cover;filter:blur(26px) brightness(.35) saturate(1.2);transform:scale(1.15)}
+.trl>*{position:relative}
+.trl .trbg{position:absolute}
+.trl .close{position:absolute;top:14px;right:14px;z-index:3}
+.trhead{width:100%;max-width:720px;display:flex;flex-direction:column;gap:3px;color:#fff}
+.trhead span{font-size:11px;letter-spacing:.22em;opacity:.65}
+.trhead b{font-size:20px;line-height:1.25;font-weight:600}
+.trhead i{font-style:normal;font-size:13px;opacity:.65}
+.trbox{width:100%;max-width:720px;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.08);animation:trpop .4s cubic-bezier(.2,.8,.2,1)}
 .trbox iframe{width:100%;height:100%;border:0}
-.trlink{color:#fff;opacity:.8;font-size:14px}
+.trlink{color:#fff;opacity:.7;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+@keyframes trin{from{opacity:0}to{opacity:1}}
+@keyframes trpop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
 .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .btns a,.btns button{padding:14px;border-radius:16px;text-align:center;font-weight:600;text-decoration:none;border:1.5px solid var(--line);background:var(--surface2)}
 .btns .main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -395,7 +404,7 @@ function detay(d){
    '<div class="btns">'+(tvt?'<button id="fr">Fragmanı izle</button>':'<a href="'+link+'" target="_blank" rel="noopener">Fragmanı izle</a>')+'<button class="main" id="ad">'+(inL?"Listemde ✓":"Listeme ekle")+'</button></div>'+
    '<button class="cta ghost" id="iz">'+(seen?"İzledim ✓":"İzledim olarak işaretle")+'</button>'+
    '<button class="cta ghost" id="pa">Arkadaşına gönder</button>';
-  if(tvt&&$("fr"))$("fr").onclick=function(){fragman(tvt.key,link)};
+  if(tvt&&$("fr"))$("fr").onclick=function(){fragman(tvt.key,link,d)};
   $("ad").onclick=function(){toggle("izlenecek",f);ac2(d)};
   $("iz").onclick=function(){toggle("izlendi",f);if(inList("izlendi",f.id))remove("izlenecek",f.id);ac2(d)};
   $("pa").onclick=function(){paylas(d,names)};
@@ -452,10 +461,12 @@ function kapat(){
   if(acik&&history.state&&history.state.sheet)history.back();
 }
 /* Fragman oynatici (uygulama icinde, YouTube gomme) */
-function fragman(key,link){
+function fragman(key,link,d){
   fragKapat(true);
   var o=el("div","trl");o.id="trl";
-  o.innerHTML='<button class="close" id="trc" aria-label="Kapat">✕</button><div class="trbox"><iframe src="https://www.youtube-nocookie.com/embed/'+encodeURIComponent(key)+'?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="Fragman"></iframe></div><a class="trlink" href="'+link+'" target="_blank" rel="noopener">Oynamıyorsa YouTube\'da aç</a>';
+  d=d||{};
+  if(d.backdrop_path)o.style.setProperty("--bd","url("+IMG+"w780"+d.backdrop_path+")");
+  o.innerHTML='<div class="trbg"></div><button class="close" id="trc" aria-label="Kapat">✕</button><div class="trhead"><span>FRAGMAN</span><b>'+esc(d.title||"")+'</b><i>'+yil(d.release_date)+'</i></div><div class="trbox"><iframe src="https://www.youtube-nocookie.com/embed/'+encodeURIComponent(key)+'?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="Fragman"></iframe></div><a class="trlink" href="'+link+'" target="_blank" rel="noopener">Oynamıyorsa YouTube\'da aç</a>';
   document.body.appendChild(o);
   $("trc").onclick=function(){fragKapat()};
   history.pushState({tr:1},"");
