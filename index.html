@@ -240,7 +240,7 @@ var MOODS=[
  {id:"dusunce",ad:"Düşünmek istiyorum",alt:"Akıl çelen",c:"#A596D6",g:"878|9648|53"}
 ];
 var SURE=[{id:"kisa",ad:"1,5 saatten kısa",max:100},{id:"orta",ad:"2 saate kadar",max:125},{id:"fark",ad:"Fark etmez",max:0}];
-var KIM=[{id:"tek",ad:"Tek başıma"},{id:"iki",ad:"İki kişi"},{id:"aile",ad:"Aile ile"}];
+var KIM=[{id:"tek",ad:"Tek başıma"},{id:"iki",ad:"İki kişi"},{id:"arkadas",ad:"Arkadaşlarla"},{id:"aile",ad:"Aile ile"}];
 var NEDEN={
  sakin:["Yorgun bir akşama yumuşak gelir.","Telaşsız, içi rahatlatan bir seçim.","Koltuğa gömülüp izlemelik."],
  neseli:["Keyfini yerine getirir.","Gülümseyerek bitireceksin.","Hafif ve eğlenceli."],
@@ -315,6 +315,9 @@ function params(){
   var p={sort_by:"popularity.desc","vote_count.gte":"1500","vote_average.gte":"7",include_adult:"false",without_genres:"27,10770",with_genres:m.g,page:String(1+Math.floor(Math.random()*8))};
   if(max)p["with_runtime.lte"]=String(max);
   if(S.kim==="aile"){p.with_genres="10751|16";p["vote_count.gte"]="800"}
+  else if(S.kim==="iki"){p["vote_average.gte"]="7.3"}
+  else if(S.kim==="arkadas"){p.with_genres=m.g+"|35|28|12";p["vote_count.gte"]="2500"}
+  else if(S.kim==="tek"){p["vote_count.gte"]="700"}
   return p;
 }
 function oneri(){
