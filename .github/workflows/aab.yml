@@ -30,7 +30,14 @@ jobs:
         env:
           BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ env.PW }}
           BUBBLEWRAP_KEY_PASSWORD: ${{ env.PW }}
-        run: bubblewrap build --skipPwaValidation
+        run: |
+          set +e
+          (bubblewrap update --skipVersionUpgrade --manifest=twa-manifest.json && bubblewrap build --skipPwaValidation) < /dev/null > build.log 2>&1
+          RC=$?
+          tail -c 1500 build.log | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' | tr -d '\r' | awk '{printf "%s%%0A", $0}' | sed 's/^/::error::/'
+          echo
+          ls -la
+          exit $RC
       - name: Dosyalari topla
         run: |
           mkdir out
