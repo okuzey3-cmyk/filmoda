@@ -10,41 +10,28 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: "17"}
+      - uses: android-actions/setup-android@v3
       - uses: actions/setup-node@v4
         with: {node-version: "20"}
       - name: Bubblewrap kur
         run: npm i -g @bubblewrap/cli
-      - name: Android SDK hazirla
+      - name: Bubblewrap ayari
         run: |
-          SDK=$HOME/sdk
-          mkdir -p $SDK
-          CT=$(ls -d $ANDROID_HOME/cmdline-tools/*/ | head -1)
-          cp -r $CT/* $SDK/
-          yes | $SDK/bin/sdkmanager --sdk_root=$SDK --licenses > /dev/null || true
-          $SDK/bin/sdkmanager --sdk_root=$SDK "platform-tools" "platforms;android-36" "build-tools;36.1.0" | tail -3
           mkdir -p ~/.bubblewrap
-          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$SDK\"}" > ~/.bubblewrap/config.json
-          echo "sdk=$SDK" ; ls $SDK
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
       - name: Imza anahtari olustur
         working-directory: twa
         run: |
           PW=$(openssl rand -hex 12)
           echo "$PW" > anahtar-sifresi.txt
-          keytool -genkeypair -keystore android.keystore -alias filmoda -keyalg RSA -keysize 2048 -validity 10000 -storepass "$PW" -keypass "$PW" -dname "CN=Filmoda, O=Filmoda, C=TR"
+          keytool -genkeypair -v -keystore android.keystore -alias filmoda -keyalg RSA -keysize 2048 -validity 10000 -storepass "$PW" -keypass "$PW" -dname "CN=Filmoda, O=Filmoda, C=TR"
           echo "PW=$PW" >> $GITHUB_ENV
       - name: AAB uret
         working-directory: twa
         env:
           BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ env.PW }}
           BUBBLEWRAP_KEY_PASSWORD: ${{ env.PW }}
-        run: |
-          set +e
-          (bubblewrap update --skipVersionUpgrade --manifest=twa-manifest.json && bubblewrap build --skipPwaValidation) < /dev/null > build.log 2>&1
-          RC=$?
-          (grep -n -A12 "What went wrong" build.log | head -40; grep -n -i "Caused by" build.log | head -8) | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' | tr -d '\r' | awk '{printf "%s%%0A", $0}' | sed 's/^/::error::/'
-          echo
-          ls -la
-          exit $RC
+        run: bubblewrap build --skipPwaValidation
       - name: Dosyalari topla
         run: |
           mkdir out
