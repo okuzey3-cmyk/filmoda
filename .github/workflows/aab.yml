@@ -10,7 +10,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: "17"}
-      - uses: android-actions/setup-android@v3
       - uses: actions/setup-node@v4
         with: {node-version: "20"}
       - name: Bubblewrap kur
@@ -18,7 +17,7 @@ jobs:
       - name: Bubblewrap ayari
         run: |
           mkdir -p ~/.bubblewrap
-          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
+          echo "ANDROID_HOME=$ANDROID_HOME"; ls $ANDROID_HOME | head; echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
       - name: Imza anahtari olustur
         working-directory: twa
         run: |
