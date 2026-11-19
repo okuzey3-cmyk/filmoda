@@ -27,7 +27,7 @@
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "fullScopeUrl": "https://okuzey3-cmyk.github.io/filmoda/",
-  "minSdkVersion": 21,
+  "minSdkVersion": 24,
   "orientation": "default",
   "signingKey": {"path": "./android.keystore", "alias": "filmoda"},
   "splashScreenFadeOutDuration": 300,
