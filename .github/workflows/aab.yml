@@ -41,7 +41,7 @@ jobs:
           set +e
           (bubblewrap update --skipVersionUpgrade --manifest=twa-manifest.json && bubblewrap build --skipPwaValidation) < /dev/null > build.log 2>&1
           RC=$?
-          tail -c 1500 build.log | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' | tr -d '\r' | awk '{printf "%s%%0A", $0}' | sed 's/^/::error::/'
+          (grep -n -A12 "What went wrong" build.log | head -40; grep -n -i "Caused by" build.log | head -8) | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' | tr -d '\r' | awk '{printf "%s%%0A", $0}' | sed 's/^/::error::/'
           echo
           ls -la
           exit $RC
