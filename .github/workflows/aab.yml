@@ -32,7 +32,12 @@ jobs:
         env:
           BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ env.PW }}
           BUBBLEWRAP_KEY_PASSWORD: ${{ env.PW }}
-        run: bubblewrap build --skipPwaValidation
+        run: |
+          set +e
+          (bubblewrap update --skipVersionUpgrade && bubblewrap build --skipPwaValidation) > build.log 2>&1
+          RC=$?
+          if [ $RC -ne 0 ]; then echo "::error::$(tail -c 900 build.log | tr '\n' ' ' | tr -d '%')"; fi
+          exit $RC
       - name: Dosyalari topla
         run: |
           mkdir out
