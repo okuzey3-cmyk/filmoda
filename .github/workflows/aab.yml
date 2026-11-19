@@ -14,10 +14,17 @@ jobs:
         with: {node-version: "20"}
       - name: Bubblewrap kur
         run: npm i -g @bubblewrap/cli
-      - name: Bubblewrap ayari
+      - name: Android SDK hazirla
         run: |
+          SDK=$HOME/sdk
+          mkdir -p $SDK
+          CT=$(ls -d $ANDROID_HOME/cmdline-tools/*/ | head -1)
+          cp -r $CT/* $SDK/
+          yes | $SDK/bin/sdkmanager --sdk_root=$SDK --licenses > /dev/null || true
+          $SDK/bin/sdkmanager --sdk_root=$SDK "platform-tools" "platforms;android-36" "build-tools;36.1.0" | tail -3
           mkdir -p ~/.bubblewrap
-          echo "ANDROID_HOME=$ANDROID_HOME"; ls $ANDROID_HOME | head; echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$SDK\"}" > ~/.bubblewrap/config.json
+          echo "sdk=$SDK" ; ls $SDK
       - name: Imza anahtari olustur
         working-directory: twa
         run: |
