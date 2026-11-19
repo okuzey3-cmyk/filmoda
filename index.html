@@ -340,8 +340,8 @@ function check(){$("go").disabled=!(S.mood&&S.sure&&S.kim)}
    (4) ogrenme: izlediklerin, tepkilerin, degistirdiklerin cihazinda zevk profiline girer */
 var TASTE_KEY="filmoda_taste";
 var GUN=86400000;
-var T={shown:{},rej:{},vw:{},sw:{}};
-try{var t0=JSON.parse(localStorage.getItem(TASTE_KEY)||"null");if(t0&&typeof t0==="object"){T.shown=t0.shown||{};T.rej=t0.rej||{};T.vw=t0.vw||{};T.sw=t0.sw||{}}}catch(e){}
+var T={shown:{},rej:{},vw:{},sw:{},op:{},fr:{},ad:{},sk:{}};
+try{var t0=JSON.parse(localStorage.getItem(TASTE_KEY)||"null");if(t0&&typeof t0==="object"){T.shown=t0.shown||{};T.rej=t0.rej||{};T.vw=t0.vw||{};T.sw=t0.sw||{};T.op=t0.op||{};T.fr=t0.fr||{};T.ad=t0.ad||{};T.sk=t0.sk||{}}}catch(e){}
 function tSave(){
   var now=Date.now();
   ["shown","rej"].forEach(function(k){Object.keys(T[k]).forEach(function(id){if(now-T[k][id]>60*GUN)delete T[k][id]})});
@@ -375,6 +375,8 @@ function profil(){
   store.izlenecek.forEach(function(f){ekle(f.g,.3);n+=.5});
   Object.keys(T.vw).forEach(function(g){t[g]=(t[g]||0)+Math.min(T.vw[g],10)*.04});
   Object.keys(T.sw).forEach(function(g){t[g]=(t[g]||0)-Math.min(T.sw[g],10)*.12});
+  [["op",.10],["fr",.25],["ad",.30],["sk",-.06]].forEach(function(p){Object.keys(T[p[0]]).forEach(function(g){t[g]=(t[g]||0)+Math.min(T[p[0]][g],12)*p[1]});
+    n+=Object.keys(T[p[0]]).length?.3:0});
   return {t:t,lam:Math.min(.3,n*.02),n:n};
 }
 /* Tek film puani (0-1 civari) */
@@ -412,6 +414,7 @@ function sec(pool,n,ctx,keep){
   return chosen;
 }
 function neden(f,i,ctx){
+  if(f._kesif)return "Alışkın olmadığın bir tat: küçük bir sürpriz.";
   if(f._b)return "Beğendiğin "+f._b+" filmini sevenlere de gidiyor.";
   if(f._pers>.72&&ctx.prof.lam>.1)return "Zevkine yakın görünüyor.";
   if(f._gem)return "Az bilinen, ama çok sevilen bir film.";
@@ -477,10 +480,25 @@ function oneri(o){
     var liste=pool.filter(function(f){return uygun(f,true)});
     if(liste.length<n+3)liste=pool.filter(function(f){return uygun(f,false)});
     var ctx={mw:MW[S.mood],cw:CW[S.kim],prof:profil(),now:Date.now(),rnd:Math.random};
-    var res=sec(liste,n,ctx,keep);
+    var res;
+    if(n>=3&&ctx.prof.lam>.1){
+      res=sec(liste,n-1,ctx,keep);
+      var rest=liste.filter(function(f){return res.indexOf(f)<0});
+      var c0={mw:ctx.mw,cw:ctx.cw,prof:{t:{},lam:0,n:0},now:ctx.now,rnd:ctx.rnd};
+      var kesif=sec(rest,1,c0,keep.concat(res));
+      if(kesif[0]){kesif[0]._kesif=1;res.push(kesif[0])}
+    }else res=sec(liste,n,ctx,keep);
     res.forEach(function(f,i){f._why=neden(f,keep.length?keep.length:i,ctx)});
     return res;
   });
+}
+/* Ortuk sinyal: dokunma, fragman, listeye ekleme, atlama. Eski sinyaller zamanla soner. */
+function sinyal(k,g){
+  if(!g||!g.length)return;
+  g.forEach(function(x){T[k][x]=(T[k][x]||0)+1});
+  var tot=0;Object.keys(T[k]).forEach(function(x){tot+=T[k][x]});
+  if(tot>60)Object.keys(T[k]).forEach(function(x){T[k][x]=T[k][x]*.7;if(T[k][x]<.3)delete T[k][x]});
+  tSave();
 }
 function reddet(f){
   if(!f)return;
@@ -521,6 +539,7 @@ function oneriBasit(){
   });
 }
 function goster(){
+  (S.cur||[]).forEach(function(c){if(!(S.opened&&S.opened[c.id]))sinyal("sk",c.genre_ids)});S.cur=[];
   var m=moodOf(S.mood);
   $("step1").classList.add("hide");$("step2").classList.remove("hide");window.scrollTo(0,0);
   $("rtitle").textContent=m.ad+".";
@@ -587,6 +606,7 @@ $("rail").addEventListener("scroll",function(){
 
 /* Detay */
 function ac(f){
+  S.opened=S.opened||{};S.opened[f.id]=1;sinyal("op",f.genre_ids);
   var sh=$("sheet");
   sh.innerHTML='<button class="close" id="cl" aria-label="Kapat">✕</button><div class="hero"></div><div class="sbody"><h2>'+esc(f.title||f.t)+'</h2><p class="ov" style="opacity:.6">Yükleniyor…</p></div>';
   sh.scrollTop=0;
@@ -628,8 +648,8 @@ function detay(d){
    '<button class="cta ghost" id="pa">Arkadaşına gönder</button>'+
    (it?(seen?'<div class="rx"><button class="chip" id="rb" aria-pressed="'+(it.r==="b")+'">Beğendim</button><button class="chip" id="rn" aria-pressed="'+(it.r==="n")+'">Beğenmedim</button></div>':'')+'<textarea class="note" id="nt" rows="2" maxlength="200" placeholder="Not ekle (örn. Bunu Ahmet önermişti)">'+esc(it.n||"")+'</textarea>':'')+
    (sim.length?'<div class="label">Benzer filmler</div><div class="sim" id="sim"></div>':'');
-  if(tvt&&$("fr"))$("fr").onclick=function(){fragman(tvt.key,link,d)};
-  $("ad").onclick=function(){toggle("izlenecek",f);ac2(d)};
+  if(tvt&&$("fr"))$("fr").onclick=function(){sinyal("fr",f.g);fragman(tvt.key,link,d)};
+  $("ad").onclick=function(){if(!inList("izlenecek",f.id))sinyal("ad",f.g);toggle("izlenecek",f);ac2(d)};
   $("iz").onclick=function(){
     var eski=store.izlenecek.filter(function(x){return x.id===f.id})[0];
     if(!inList("izlendi",f.id)&&eski&&eski.n)f.n=eski.n;
