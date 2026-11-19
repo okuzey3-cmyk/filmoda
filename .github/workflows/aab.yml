@@ -16,6 +16,12 @@ jobs:
         with: {node-version: "20"}
       - name: Bubblewrap kur
         run: npm i -g @bubblewrap/cli
+      - name: Android SDK hazirla
+        run: |
+          SM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          "$SM" "platform-tools" "build-tools;34.0.0" "platforms;android-34" > /dev/null || true
+          [ -e "$ANDROID_HOME/tools" ] || ln -s "$ANDROID_HOME/cmdline-tools/latest" "$ANDROID_HOME/tools" || true
+          echo "::notice::SDK: $(ls $ANDROID_HOME | tr '\n' ' ') | BT: $(ls $ANDROID_HOME/build-tools | tr '\n' ' ')"
       - name: Bubblewrap ayari
         run: |
           mkdir -p ~/.bubblewrap
