@@ -42,7 +42,7 @@ jobs:
           set +e
           (bubblewrap update --skipVersionUpgrade && bubblewrap build --skipPwaValidation) > build.log 2>&1
           RC=$?
-          if [ $RC -ne 0 ]; then echo "::error::$(tail -c 900 build.log | tr '\n' ' ' | tr -d '%')"; fi
+          if [ $RC -ne 0 ]; then echo "::error::$(grep -v '^\s*at ' build.log | grep -iE -A6 'What went wrong|error:|FAILURE|Could not|Execution failed' | head -c 1500 | tr '\n' ' ' | tr -d '%')"; fi
           exit $RC
       - name: Dosyalari topla
         run: |
