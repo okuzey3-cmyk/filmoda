@@ -338,7 +338,10 @@ function buildChoices(){
     b.onclick=function(){S.mood=m.id;[].forEach.call(mw.children,function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");check();ilerle()};
     mw.appendChild(b)});
   chipRow($("sure"),SURE,"sure");chipRow($("kim"),KIM,"kim");
+  varsayilanSure();
 }
+/* Sure sorusu "Fark etmez" secili baslar: bir soru daha az */
+function varsayilanSure(){S.sure="fark";var c=$("sure").children[2];if(c)c.setAttribute("aria-pressed","true")}
 function chipRow(box,list,key){
   list.forEach(function(o){
     var b=el("button","chip",o.ad);b.setAttribute("aria-pressed","false");
@@ -1061,7 +1064,7 @@ $("back").onclick=function(){modSifirla();$("step2").classList.add("hide");$("st
 function secimSifirla(){
   S.mood=S.sure=S.kim=null;
   [].forEach.call(document.querySelectorAll("#step1 [aria-pressed]"),function(x){x.setAttribute("aria-pressed","false")});
-  check();
+  varsayilanSure();check();
 }
 function modSifirla(){
   var dual=dualMod();
