@@ -32,9 +32,11 @@ import traceback
 def main():
     soru = open("ai/soru.md", encoding="utf-8").read()
     sistem = open("ai/baglam.md", encoding="utf-8").read()
+    if os.path.exists("ai/arastirma.md"):
+        sistem += "\n\n=== PIYASA ARASTIRMASI (Claude topladi) ===\n" + open("ai/arastirma.md", encoding="utf-8").read()
     kod = open("index.html", encoding="utf-8").read()[:150000]
     gecmis = ""
-    for f in sorted(glob.glob("ai/tur-*.md"))[-4:]:
+    for f in sorted(glob.glob("ai/tur-*.md"))[-5:]:
         gecmis += f"\n\n--- {f} ---\n" + open(f, encoding="utf-8").read()[:6000]
 
     tam = (sistem + "\n\n=== UYGULAMANIN KODU (index.html) ===\n" + kod +
@@ -59,7 +61,7 @@ def main():
         return
     if os.path.exists("ai/hata.md"):
         os.remove("ai/hata.md")
-    n = len(glob.glob("ai/tur-*.md")) + 1
+    n = len(glob.glob("ai/tur-*-gemini.md")) + 1
     with open(f"ai/tur-{n:02d}-gemini.md", "w", encoding="utf-8") as f:
         f.write(f"# Tur {n} - Gemini cevabi (model: {kullanilan})\n\n{cevap}\n")
     print("ok", kullanilan, n)
