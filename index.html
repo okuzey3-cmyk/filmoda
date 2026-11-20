@@ -123,6 +123,9 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
 .plat span{padding:6px 12px;border-radius:10px;background:var(--surface2);font-size:13px}
 .src{font-size:11px;color:var(--muted);margin-bottom:18px}
 .src a{color:var(--muted)}
+@keyframes cag{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.cta.cag{animation:cag .9s ease-in-out 2}
+@media (prefers-reduced-motion:reduce){.cta.cag{animation:none}}
 .plk{font-size:12px;color:var(--muted);margin:2px 0 6px}
 .plat span.ab{background:rgba(224,138,158,.18);color:var(--text,#EFE8EC);font-weight:600}
 .row .pl{font-size:12px;margin-top:4px;color:var(--muted)}
@@ -326,17 +329,34 @@ function buildChoices(){
   MOODS.forEach(function(m){
     var b=el("button","mood",'<div class="dot"></div><div><b>'+m.ad+'</b><br><span>'+m.alt+'</span></div>');
     b.style.setProperty("--c",m.c);b.setAttribute("aria-pressed","false");
-    b.onclick=function(){S.mood=m.id;[].forEach.call(mw.children,function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");check()};
+    b.onclick=function(){S.mood=m.id;[].forEach.call(mw.children,function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");check();ilerle()};
     mw.appendChild(b)});
   chipRow($("sure"),SURE,"sure");chipRow($("kim"),KIM,"kim");
 }
 function chipRow(box,list,key){
   list.forEach(function(o){
     var b=el("button","chip",o.ad);b.setAttribute("aria-pressed","false");
-    b.onclick=function(){S[key]=o.id;[].forEach.call(box.children,function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");check()};
+    b.onclick=function(){S[key]=o.id;[].forEach.call(box.children,function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");check();ilerle()};
     box.appendChild(b)});
 }
 function check(){$("go").disabled=!(S.mood&&S.sure&&S.kim)}
+/* Secimden sonra bir sonraki soruya kendiliginden kaydir */
+function ilerle(){
+  var hedef,blok;
+  if(!S.sure){hedef=$("sure");}else if(!S.kim){hedef=$("kim");}else{hedef=$("go");}
+  var bas=hedef===$("go")?hedef:hedef.previousElementSibling;
+  setTimeout(function(){
+    var navH=(document.querySelector("nav")||{offsetHeight:0}).offsetHeight;
+    var r1=bas.getBoundingClientRect(),r2=hedef.getBoundingClientRect();
+    var gorunur=r1.top>=60&&r2.bottom<=window.innerHeight-navH-12;
+    if(!gorunur){
+      var y=window.scrollY+r1.top-Math.max(70,(window.innerHeight-navH-(r2.bottom-r1.top))/2);
+      var az=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({top:Math.max(0,y),behavior:az?"auto":"smooth"});
+    }
+    if(hedef===$("go")&&!$("go").disabled){$("go").classList.remove("cag");void $("go").offsetWidth;$("go").classList.add("cag")}
+  },220);
+}
 
 /* Oneri */
 /* ===== ONERI MOTORU v2 =====
