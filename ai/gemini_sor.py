@@ -15,16 +15,18 @@ def call(model, text):
         d = json.load(r)
     return "".join(p.get("text", "") for p in d["candidates"][0]["content"]["parts"])
 
-def pick_model():
+def liste_modeller():
     req = urllib.request.Request(f"{BASE}/models?pageSize=200", headers={"x-goog-api-key": KEY})
     with urllib.request.urlopen(req, timeout=60) as r:
         ms = json.load(r).get("models", [])
-    ok = [m["name"].split("/")[1] for m in ms
-          if "generateContent" in m.get("supportedGenerationMethods", [])
-          and "flash" in m["name"] and "lite" not in m["name"]
-          and not any(x in m["name"] for x in ("image", "tts", "live", "audio", "thinking", "preview", "exp"))]
-    ok.sort(reverse=True)
-    return ok[0] if ok else None
+    ad = [m["name"].split("/")[1] for m in ms if "generateContent" in m.get("supportedGenerationMethods", [])]
+    open("ai/modeller.txt", "w").write("\n".join(ad))
+    iyi = [x for x in ad if ("flash" in x or "pro" in x or "gemma" in x)
+           and not any(t in x for t in ("image", "tts", "live", "audio", "omni", "embedding", "robotics", "computer", "vision"))]
+    # once flash (lite hari), sonra lite, sonra pro, sonra gemma
+    def sira(x):
+        return (0 if ("flash" in x and "lite" not in x) else 1 if "lite" in x else 2 if "pro" in x else 3, x)
+    return sorted(iyi, key=sira)
 
 import traceback
 def main():
@@ -38,20 +40,25 @@ def main():
     tam = (sistem + "\n\n=== UYGULAMANIN KODU (index.html) ===\n" + kod +
            "\n\n=== ONCEKI TURLAR ===" + gecmis + "\n\n=== CLAUDE'UN SORUSU ===\n" + soru)
 
-    try:
-        cevap = call(MODEL, tam)
-        kullanilan = MODEL
-    except urllib.error.HTTPError as e:
-        if e.code in (400, 404):
-            m = pick_model()
-            if not m:
-                raise
+    adaylar = [MODEL] + [m for m in liste_modeller() if m != MODEL]
+    kullanilan = None
+    sonhata = ""
+    deneme = []
+    for m in adaylar[:14]:
+        try:
             cevap = call(m, tam)
             kullanilan = m
-        else:
-            print("HTTP", e.code, e.read().decode()[:500])
-            raise
-
+            break
+        except urllib.error.HTTPError as e:
+            deneme.append(f"{m}: HTTP {e.code}")
+            sonhata = e.read().decode()[:300]
+            if e.code not in (400, 404, 429, 503):
+                raise
+    if not kullanilan:
+        open("ai/hata.md", "w", encoding="utf-8").write("Hicbir model calismadi\n" + "\n".join(deneme) + "\n" + sonhata.replace(KEY, "***"))
+        return
+    if os.path.exists("ai/hata.md"):
+        os.remove("ai/hata.md")
     n = len(glob.glob("ai/tur-*.md")) + 1
     with open(f"ai/tur-{n:02d}-gemini.md", "w", encoding="utf-8") as f:
         f.write(f"# Tur {n} - Gemini cevabi (model: {kullanilan})\n\n{cevap}\n")

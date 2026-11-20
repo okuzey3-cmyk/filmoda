@@ -4,3 +4,4 @@ Gorev: Kodu ve uygulamanin amacini incele. Kullanicilar icin en cok deger kataca
 
 Kullanici profili: yasi ortanca ve ustu insanlar da kullanacak; sade ve buyuk dugmeli arayuz onemli.
 tekrar
+.
