@@ -940,7 +940,7 @@ function kartCiz(d){
   return c;
 }
 function paylas(d,names){
-  var metin='Bu akşam "'+d.title+'" izleyelim mi? '+SITE;
+  var metin='Bu akşam "'+d.title+'" izleyelim mi? '+SITE+'?f='+d.id;
   var c;try{c=kartCiz(d)}catch(e){c=null}
   function sadeceMetin(){if(navigator.share)navigator.share({text:metin}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(metin)}
   if(!c||!c.toBlob){sadeceMetin();return}
@@ -1132,6 +1132,8 @@ $("paylas").onclick=function(){
   try{
     var b=new URLSearchParams(location.search).get("b");
     if(b&&moodOf(b)){davetliBasla(b);history.replaceState(null,"",location.pathname)}
+    var fl=new URLSearchParams(location.search).get("f");
+    if(/^\d{1,9}$/.test(fl||"")){window._fl=1;history.replaceState(null,"",location.pathname);ac({id:+fl,title:""})}
   }catch(e){}
 })();
 
@@ -1153,7 +1155,7 @@ setTimeout(platYenile,3000);
 (function(){
   var ov=document.getElementById("intro");if(!ov)return;
   var done=false;try{done=localStorage.getItem("filmoda_intro")==="1"}catch(e){}
-  if(done)return;
+  if(done||window._fl)return;
   var sp=document.getElementById("i-splash"),tr=document.getElementById("i-trial"),sk=document.getElementById("i-skip");
   var M=[
    {ad:"Dinlenmek istiyorum",c:"#86AEBD",l:["Yumuşak bir akşam","Sakin tempo","İçini ısıtır"]},
