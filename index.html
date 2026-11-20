@@ -49,6 +49,17 @@ h1{font-size:34px;line-height:1.1;margin-bottom:6px}
 .mini{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 8px;border-radius:14px;background:transparent;border:1.5px solid var(--line);color:var(--muted);font-size:14px;font-weight:600;line-height:1.1;transition:border-color .15s,color .15s}
 .mini svg{flex:none;color:var(--accent)}
 .mini:active{border-color:var(--accent);color:var(--text)}
+.vaz{margin-left:auto;font-family:var(--body);font-weight:600;font-size:15px;color:var(--muted);padding:6px 4px}
+#sure{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}
+#kim{display:grid;grid-template-columns:1fr 1fr}
+#sure .chip,#kim .chip{text-align:center;padding:11px 8px}
+.mps{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.mp{--c:var(--accent);display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;background:color-mix(in srgb,var(--c) 14%,var(--surface));border:1.5px solid color-mix(in srgb,var(--c) 55%,transparent);color:var(--text);font-size:14px;font-weight:600}
+.mp i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+.rail.tek{justify-content:center}
+.btns+.btns{margin-top:10px}
+.btns.soft a,.btns.soft button{background:transparent;padding:12px 8px;font-size:15px;color:var(--text)}
+.sim button{align-self:flex-start;padding:0}
 .dual .label,.dual #sure,.dual #kim,.dual .alt2{display:none}
 .chip{padding:10px 16px;border-radius:999px;background:var(--surface);border:1.5px solid var(--line);font-size:15px;font-weight:500}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
@@ -200,7 +211,7 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
 <main id="main">
 
 <section id="v-oner">
-  <div class="brand"><i></i>Filmoda</div>
+  <div class="brand"><i></i>Filmoda<button class="vaz hide" id="bvaz">Vazgeç</button></div>
 
   <div id="step1">
     <h1 id="h1a">Bu akşam nasılsın?</h1>
@@ -209,7 +220,6 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
       <button class="mini" id="kararsiz" aria-label="Kararsızım, bana birini seç"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="15" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/><circle cx="9" cy="15" r="1" fill="currentColor"/></svg><span>Kararsızım</span></button>
       <button class="mini" id="birlikte" aria-label="Birlikte izleyelim"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/></svg><span>Birlikte izleyelim</span></button>
     </div>
-    <button class="mini hide" id="bvaz" style="margin-bottom:16px;width:auto;padding:10px 18px">Vazgeç</button>
     <div class="moods" id="moods"></div>
     <div class="label">Ne kadar vaktin var?</div>
     <div class="chips" id="sure"></div>
@@ -283,7 +293,7 @@ var MOODS=[
  {id:"heyecan",ad:"Heyecan istiyorum",alt:"Nefes kesen",c:"#D9755F",g:"28|53|9648"},
  {id:"dusunce",ad:"Düşünmek istiyorum",alt:"Akıl çelen",c:"#A596D6",g:"878|9648|53"}
 ];
-var SURE=[{id:"kisa",ad:"1,5 saatten kısa",max:100},{id:"orta",ad:"2 saate kadar",max:125},{id:"fark",ad:"Fark etmez",max:0}];
+var SURE=[{id:"kisa",ad:"1,5 saat altı",max:100},{id:"orta",ad:"2 saat altı",max:125},{id:"fark",ad:"Fark etmez",max:0}];
 var KIM=[{id:"tek",ad:"Tek başıma"},{id:"iki",ad:"İki kişi"},{id:"arkadas",ad:"Arkadaşlarla"},{id:"aile",ad:"Aile ile"}];
 var NEDEN={
  sakin:["Yorgun bir akşama yumuşak gelir.","Telaşsız, içi rahatlatan bir seçim.","Koltuğa gömülüp izlemelik."],
@@ -726,10 +736,10 @@ function goster(){
   var k=KIM.filter(function(x){return x.id===S.kim})[0].ad;
   $("rsub").textContent="Bu akşam için üç seçim. "+k+", "+SURE.filter(function(x){return x.id===S.sure})[0].ad.toLowerCase()+".";
   if(S.mode==="tek"){$("rtitle").textContent="Kararsız kalma.";$("rsub").textContent="Bu akşam için tek öneri. Beğenmezsen aşağıdan başkasını iste."}
-  if(S.mode==="davetli"&&S.mood2){$("rtitle").textContent="İkinizin ortak seçimi.";$("rsub").textContent="Arkadaşın: "+moodOf(S.mood2).ad+". Sen: "+m.ad+". İkinize de uyan üç film."}
-  $("paylas").classList.add("hide");
-  var g=$("glow");g.style.setProperty("--g",m.c);g.classList.add("on");
-  var rail=$("rail");rail.innerHTML="";$("dots").innerHTML="";
+  if(S.mode==="davetli"&&S.mood2){$("rtitle").textContent="İkinizin ortak seçimi.";$("rsub").innerHTML='<span class="mps">'+moodPill("Arkadaşın",S.mood2)+moodPill("Sen",S.mood)+'</span>İkinize de uyan üç film.'}
+  $("paylas").classList.add("hide");$("bvaz").classList.add("hide");
+  var g=$("glow");g.style.setProperty("--g",(S.mode==="davetli"&&S.mood2)?"color-mix(in srgb,"+m.c+" 50%,"+moodOf(S.mood2).c+")":m.c);g.classList.add("on");
+  var rail=$("rail");rail.innerHTML="";$("dots").innerHTML="";rail.classList.toggle("tek",S.mode==="tek");$("dots").style.display=S.mode==="tek"?"none":"";
   rail.appendChild(el("div","skeleton"));rail.appendChild(el("div","skeleton"));
   $("again").disabled=true;
   function sonKaydet(){try{localStorage.setItem("filmoda_son",JSON.stringify({mood:S.mood,list:S.cur}))}catch(e){}}
@@ -878,8 +888,7 @@ function detay(d){
    platHtml+
    '<div class="src">Az önce kontrol edildi · Kaynak: '+(po.link?'<a href="'+esc(po.link)+'" target="_blank" rel="noopener">JustWatch</a>':'JustWatch')+' (günlük güncellenir; izlemeden önce platformda da bakmanı öneririz)</div>'+
    '<div class="btns">'+(tvt?'<button id="fr">Fragmanı izle</button>':'<a href="'+link+'" target="_blank" rel="noopener">Fragmanı izle</a>')+'<button class="main" id="ad">'+(inL?"Listemde ✓":"Listeme ekle")+'</button></div>'+
-   '<button class="cta ghost" id="iz">'+(seen?"İzledim ✓":"İzledim olarak işaretle")+'</button>'+
-   '<button class="cta ghost" id="pa">Arkadaşına gönder</button>'+
+   '<div class="btns soft"><button id="iz">'+(seen?"İzledim ✓":"İzledim")+'</button><button id="pa">Arkadaşına gönder</button></div>'+
    (it?(seen?'<div class="rx"><button class="chip" id="rb" aria-pressed="'+(it.r==="b")+'">Beğendim</button><button class="chip" id="rn" aria-pressed="'+(it.r==="n")+'">Beğenmedim</button></div>':'')+'<textarea class="note" id="nt" rows="2" maxlength="200" placeholder="Not ekle (örn. Bunu Ahmet önermişti)">'+esc(it.n||"")+'</textarea>':'')+
    (sim.length?'<div class="label">Benzer filmler</div><div class="sim" id="sim"></div>':'');
   if(tvt&&$("fr"))$("fr").onclick=function(){sinyal("fr",f.g);ogren(d,.8,d);fragman(tvt.key,link,d)};
@@ -1080,6 +1089,8 @@ function modSifirla(){
   $("go").textContent="Filmleri getir";$("bvaz").classList.add("hide");$("bmsg").classList.add("hide");
   if(dual)secimSifirla();
 }
+var KISA={sakin:"Dinlenmek",neseli:"Neşeli",duygusal:"Duygusal",heyecan:"Heyecan",dusunce:"Düşünmek"};
+function moodPill(on,id){var m=moodOf(id);return '<span class="mp" style="--c:'+m.c+'"><i></i>'+(on?on+" · ":"")+KISA[id]+'</span>'}
 function davetLink(){return location.origin+location.pathname+"?b="+S.mood}
 function davetGonder(){
   var link=davetLink(),metin="Bu akşam birlikte film seçelim. Önce sen nasıl olduğunu söyle:";
@@ -1103,7 +1114,7 @@ function davetliBasla(a){
   var m=moodOf(a);
   $("step1").classList.add("dual");
   $("h1a").textContent="Arkadaşın seninle film seçmek istiyor.";
-  $("suba").textContent="O, \""+m.ad+"\" havasında. Sen nasılsın?";
+  $("suba").innerHTML='Arkadaşın şu havada:<span class="mps">'+moodPill("",a)+'</span>Şimdi sen seç.';
   $("go").textContent="İkimize uygun filmleri getir";$("bvaz").classList.remove("hide");$("bmsg").classList.add("hide");
 }
 $("birlikte").onclick=davetciBasla;
