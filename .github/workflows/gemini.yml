@@ -1,0 +1,27 @@
+name: Gemini tartisma
+on:
+  push:
+    branches: [main]
+    paths: ['ai/soru.md']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: gemini
+  cancel-in-progress: false
+jobs:
+  sor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gemini'ye sor
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python3 ai/gemini_sor.py
+      - name: Cevabi depoya yaz
+        run: |
+          git config user.name "gemini-bridge"
+          git config user.email "gemini-bridge@users.noreply.github.com"
+          git add ai/
+          git commit -m "Gemini cevabi" || echo "degisiklik yok"
+          git push
