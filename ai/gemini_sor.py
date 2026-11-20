@@ -26,31 +26,43 @@ def pick_model():
     ok.sort(reverse=True)
     return ok[0] if ok else None
 
-soru = open("ai/soru.md", encoding="utf-8").read()
-sistem = open("ai/baglam.md", encoding="utf-8").read()
-kod = open("index.html", encoding="utf-8").read()[:150000]
-gecmis = ""
-for f in sorted(glob.glob("ai/tur-*.md"))[-4:]:
-    gecmis += f"\n\n--- {f} ---\n" + open(f, encoding="utf-8").read()[:6000]
+import traceback
+def main():
+    soru = open("ai/soru.md", encoding="utf-8").read()
+    sistem = open("ai/baglam.md", encoding="utf-8").read()
+    kod = open("index.html", encoding="utf-8").read()[:150000]
+    gecmis = ""
+    for f in sorted(glob.glob("ai/tur-*.md"))[-4:]:
+        gecmis += f"\n\n--- {f} ---\n" + open(f, encoding="utf-8").read()[:6000]
 
-tam = (sistem + "\n\n=== UYGULAMANIN KODU (index.html) ===\n" + kod +
-       "\n\n=== ONCEKI TURLAR ===" + gecmis + "\n\n=== CLAUDE'UN SORUSU ===\n" + soru)
+    tam = (sistem + "\n\n=== UYGULAMANIN KODU (index.html) ===\n" + kod +
+           "\n\n=== ONCEKI TURLAR ===" + gecmis + "\n\n=== CLAUDE'UN SORUSU ===\n" + soru)
+
+    try:
+        cevap = call(MODEL, tam)
+        kullanilan = MODEL
+    except urllib.error.HTTPError as e:
+        if e.code in (400, 404):
+            m = pick_model()
+            if not m:
+                raise
+            cevap = call(m, tam)
+            kullanilan = m
+        else:
+            print("HTTP", e.code, e.read().decode()[:500])
+            raise
+
+    n = len(glob.glob("ai/tur-*.md")) + 1
+    with open(f"ai/tur-{n:02d}-gemini.md", "w", encoding="utf-8") as f:
+        f.write(f"# Tur {n} - Gemini cevabi (model: {kullanilan})\n\n{cevap}\n")
+    print("ok", kullanilan, n)
 
 try:
-    cevap = call(MODEL, tam)
-    kullanilan = MODEL
+    main()
 except urllib.error.HTTPError as e:
-    if e.code in (400, 404):
-        m = pick_model()
-        if not m:
-            raise
-        cevap = call(m, tam)
-        kullanilan = m
-    else:
-        print("HTTP", e.code, e.read().decode()[:500])
-        raise
-
-n = len(glob.glob("ai/tur-*.md")) + 1
-with open(f"ai/tur-{n:02d}-gemini.md", "w", encoding="utf-8") as f:
-    f.write(f"# Tur {n} - Gemini cevabi (model: {kullanilan})\n\n{cevap}\n")
-print("ok", kullanilan, n)
+    msg=e.read().decode()[:1500]
+    open('ai/hata.md','w',encoding='utf-8').write('HTTP %s\n%s\n'%(e.code,msg.replace(KEY,'***')))
+    print('HTTP',e.code)
+except Exception:
+    open('ai/hata.md','w',encoding='utf-8').write(traceback.format_exc().replace(KEY,'***'))
+    print('HATA')
