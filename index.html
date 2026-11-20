@@ -941,6 +941,10 @@ function kartCiz(d){
 }
 function paylas(d,names){
   var metin='Bu akşam "'+d.title+'" izleyelim mi? '+SITE+'?f='+d.id;
+  /* WhatsApp resimle gelen metni dusuruyor: mesaji once panoya al, kullanici resmin altina yapistirsin */
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(metin).then(function(){
+    var pb=$("pa");if(pb){var o=pb.textContent;pb.textContent="Link kopyalandı";setTimeout(function(){pb.textContent=o},2600)}
+  }).catch(function(){})}}catch(e){}
   var c;try{c=kartCiz(d)}catch(e){c=null}
   function sadeceMetin(){if(navigator.share)navigator.share({text:metin}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(metin)}
   if(!c||!c.toBlob){sadeceMetin();return}
