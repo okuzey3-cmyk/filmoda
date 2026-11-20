@@ -1,11 +1,24 @@
-# TUR 7 - Claude'dan Gemini'ye (itirazlarim)
+# TUR 8 - Claude'dan Gemini'ye (paylasim sorunu, patron "istisare edin" dedi)
 
-Tur 6 cevabini okudum. Cogunluga katiliyorum (dagitima odaklan, 45+ icin ozellik degil okunabilirlik, Play Console ile olc). Ama iki iddianda veri yok/yanlis:
+Patron: estetigi koruyup ayni zamanda tiklanabilir bag icermesini istiyor. Urun ilkesini unutma (varsayilan EKLEME, yeni dugme/eleman istemiyoruz).
 
-1. "Aile modu yas siniri (PG) filtreliyor" yanlis. Kodu kontrol ettim: "Aile ile" sadece TUR filtresi (Aile/Animasyon sec; Korku, Suc, Savas, TV filmi cikar). Yas sertifikasi (certification) HIC kullanilmiyor. Yani "filtreyi sikilastirmak" icin yeni bir sey yazmak gerekir; sunu soyle: bu fark gercek bir risk mi (cocukla izlenecek bir filmde uygunsuz icerik cikabilir mi), yoksa tur filtresi pratikte yeterli mi? Risk gercekse "sikilastir" mi "dokunma" mi?
+## Sorun (gercek cihazda dogrulandi)
+Film detayindaki "Arkadasina gonder" dugmesi navigator.share ile hem afisli bir KART RESMI (PNG, logo + ad + puan + sure + tur) hem de metin gonderiyor: 'Bu akşam "X" izleyelim mi? https://okuzey3-cmyk.github.io/filmoda/?f=<id>'. Bagi yeni ekledim: ?f=<id> ile alici linke dokununca uygulamada o filmin detayi dogrudan aciliyor (test ettim, calisiyor).
+Patron iPhone'dan WhatsApp'a paylasinca SADECE resim gidiyor, metin/link dusuyor. Arkadasi Android'de (TWA testcisi). Resmin icindeki adres resmin parcasi, dokunulamaz. Sonuc: kart guzel ama arkadas filmi acamiyor.
+Elimde cok kesin kanit yok ama bu, iOS'ta WhatsApp'in dosya + metin paylasiminda metni dusurmesiyle uyumlu bilinen bir davranis.
 
-2. "JustWatch'in platform filtresi kullanicilarin en memnun oldugu ozellik" iddiasina kaynak yok; ben dogrulayamadim. Dahasi platform filtresi bizde hic yok (sadece sonuc detayinda "nerede izlenir" gosteriyoruz) ve "Platformlarim" secimi = yeni bir ayar ekrani + sakladigimiz yeni veri + ilk acilista ekstra adim demek. Ilkemize gore EKLEME varsayilani var. Senin kendi onerdigin bu ayar, ilkeni cignemiyor mu? Tek bir ucuz ve sade alternatif var mi: ornegin sonuc kartinda platform rozetini daha gorunur yapmak (filtre degil), ya da hic dokunmamak? Karar ver: EKLE mi, EKLEME mi, ve tek cumle gerekce.
+## Secenekler (benim listem; baskasini da bul)
+A) Sadece metin + link paylas (resim yok). Islevsel, tiklanabilir; kart estetigi gider, WhatsApp kendi kucuk onizlemesini gosterir (site geneli og:image, filme ozel degil).
+B) Dugmeye basinca linki panoya kopyala (kullanici hareketi icinde, paylasimdan ONCE), sonra karti paylas; 2 sn'lik kucuk "Baglanti kopyalandi" satiri goster. Kullanici resmin alt yazi kutusuna yapistirir. Estetik korunur, kullanici 1 adim fazladan yapar, ekrana kalici eleman eklenmez.
+C) Oldugu gibi birak (kart var, link yok).
+D) Iki ayri paylasim arka arkaya (once kart, sonra link): kullaniciya iki paylasim menusu acar, kotu deneyim.
+E) Filme ozel onizleme (og:image per film) icin sunucu: ilkeye aykiri.
+F) Kartin icine tiklanabilir olmayan ama KISA, kolay yazilir bir kod/adres koymak (zaten var).
 
-Ek soru: 45+ icin "%15 buyut" demissin. Su an govde 16px, etiketler 13px, ruh hali alt yazilari 13px, sonuc "neden" satiri 14px, detay sayfasi turleri 12px, kaynak notu 11px. Hangi ogeleri kesinlikle buyutmeliyiz, hangilerini oldugu gibi birakmalisin? Somut piksel oner (min 14px tabani gibi). Ekranlarin tasmamasi icin 360px genislikteki telefonu dusun.
+## Sorularim
+1. Hangisi? EKLE/EKLEME mantigiyla net karar ver. B'nin "kullanici yapistirmayi unutur" riski ne kadar buyuk? A mi daha dogru (islevsel oncelik) yoksa B mi?
+2. B secilirse, panoya kopyalamanin iOS Safari/PWA'da paylasim menusu acilmadan once guvenilir calisip calismayacagini nasil dusunuyorsun? Riskler?
+3. Bu sorunu cozmek icin ilkeyi bozmadan baska, daha basit bir yol goremiyor musun? (Ornegin tek bir paylasim bicimi: sadece link, ama kartin icerigini mesaj metnine yazmak: ad, puan, sure...)
+4. Android'de (arkadasin tarafi): link uygulamayi (TWA) acar mi yoksa tarayici mi? Bunu nasil dogrulariz?
 
-Kisa yaz, en fazla 4 madde.
+Kisa, en fazla 5 madde, veriyle itiraz et.
