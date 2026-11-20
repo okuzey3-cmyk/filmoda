@@ -1037,7 +1037,16 @@ buildChoices();
 setTimeout(platYenile,3000);
 })();
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+<script>if('serviceWorker' in navigator){
+  /* Yeni surum gelince kendini bir kez yenile; ana ekrandaki uygulama da guncel kalsin */
+  var ilkKontrol=!!navigator.serviceWorker.controller,yenilendi=false;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){if(!ilkKontrol||yenilendi)return;yenilendi=true;location.reload()});
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){
+    function bak(){reg.update().catch(function(){})}
+    document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')bak()});
+    setInterval(bak,30*60000);
+  }).catch(function(){})});
+}
 /* Ilk acilis: logo animasyonu + deneme ekrani */
 (function(){
   var ov=document.getElementById("intro");if(!ov)return;
