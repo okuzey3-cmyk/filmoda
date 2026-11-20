@@ -495,10 +495,10 @@ function havuz(){
     });
   }
   var isler=[
-    getir({sort_by:"popularity.desc","vote_count.gte":String(V),"vote_average.gte":"6.9"},6),
-    getir({sort_by:"vote_average.desc","vote_count.gte":String(Math.max(V,3000)),"vote_average.gte":"7.4"},3),
-    getir({sort_by:"vote_average.desc","vote_count.gte":"800","vote_count.lte":"5000","vote_average.gte":"7.3"},3),
-    getir({with_original_language:"tr",sort_by:"popularity.desc","vote_count.gte":"200","vote_average.gte":"7"},2)
+    getir({sort_by:"popularity.desc","vote_count.gte":String(V),"vote_average.gte":"6.9"},15),
+    getir({sort_by:"vote_average.desc","vote_count.gte":String(Math.max(V,3000)),"vote_average.gte":"7.4"},8),
+    getir({sort_by:"vote_average.desc","vote_count.gte":"800","vote_count.lte":"5000","vote_average.gte":"7.3"},8),
+    getir({with_original_language:"tr",sort_by:"popularity.desc","vote_count.gte":"200","vote_average.gte":"7"},3)
   ];
   /* iki kisi: her iki ruh halinden birer tur iceren filmler (Komedi+Romantik gibi) */
   if(S.mood2){
