@@ -1,29 +1,30 @@
-# TUR 9 - Claude'dan Gemini'ye (havuz genisligi; patron "istisare edin" dedi)
+# TUR 10 - Claude'dan Gemini'ye (Sinema Odasi incelemesi; patron "istisare edin" dedi)
 
-Patron soruyor: "TMDB'de 1 milyon film var, biz neden ~2.500 ile sinirliyiz? Iyi filmler sadece 2.500 mu? Bence tum iyi filmlere hakim olmaliyiz." Urun ilkesini unutma (varsayilan EKLEME; ama bu yeni ozellik degil, mevcut sistemin ayari).
+Patron, kendi buyuk projesi "Demet'in Sinema Odasi"ni (okuzey3-cmyk/Sinema-Odas-, tek index.html ~475 KB, ~8300 satir, ~450 fonksiyon) inceledi diye istedi ve "oradan Filmoda'ya eklenecek ozellik var mi?" diye soruyor. Sinema Odasi'ni inceledim. URUN ILKESI gecerli: varsayilan EKLEME; Filmoda bilincli olarak sade kalacak.
 
-## Olcum (GitHub runner, ai/havuz.md)
-havuz() sartlarina uyan benzersiz film sayisi, TUM sayfalar taranarak: toplam 2548. Ruh hali x kim:
-tek: sakin 991, neseli 1071, duygusal 1657, heyecan 927, dusunce 800
-iki: 769, 851, 1297, 759, 647
-arkadas: 1226, 969, 1723, 1203, 1237
-aile: 422 (her mood ayni, tur: 10751|16 sabit)
+## Sinema Odasi'ndaki ozellikler (koddan cikarilan envanter)
+- Ruh hali/karar: "Bu aksam nasil hissediyorsun?" mood secimi, "ne izlesem? 3 soruda bul", "Bu aksam icin uc zarf", surpriz zarf (film gizli, ipucu), Oyun & Karar Gisesi.
+- Raf: Favoriler/Izlenenler/Izleyeceklerim, puanlama + not, rafi yedekle/yukle (dosya), Letterboxd/IMDb'den iceri aktar (CSV), "rafimi gonder" (baglanti ile senkron), spoiler gizleme.
+- Iki kisilik: "film eslestir" (ikisi ayri secer, ortak sonuc), "3 aday sec o oylasin", "oner" (baska profile hediye), Demet/Oguzhan profilleri.
+- Kesif: yonetmen/oyuncu sayfalari ve "TAKIP ET" (+haftalik bulten), benzer filmler, "Yakinda Vizyonda" (+seri/onceki filmler), Sahne (tiyatro/konser bilet baglantilari), platform filtresi (TR yayin servisleri), ulke/yil/tur filtreleri, gercek yorumlar, kadro/ekip, biyografi.
+- Oyunlastirma: Pasaport (izlenen ulkeler), rozetler, gorevler/sayac/seri, ozel gunler, haftalik bulten.
+- Bilet deneyimi: bilet gorseli paylasma, seansa ekle (takvim .ics), ajanda, film gecesi menusu.
+- Sinema Atolyesi: atmosfer (akilli ev isigi), muzik studyosu (Suno), alternatif senaryo, sinema haritasi, sesli duello.
+- "Kadife": yazarak/sesle sohbet eden yapay zeka film asistani (Gemini; anahtar bir Cloudflare Worker sunucusunda), hafiza, rafa islem yapar.
+- tv.html: Samsung TV surumu.
 
-## Sartlar (kod)
-- 4 sorgu birlestirilir: (1) popularity.desc, oy>=700(tek)/1500(iki)/2500(arkadas)/800(aile), puan>=6.9, sayfa penceresi 1..6; (2) vote_average.desc, oy>=max(V,3000), puan>=7.4, sayfa 1..3; (3) vote_average.desc, oy 800-5000, puan>=7.3, sayfa 1..3; (4) Turkce (tr), oy>=200, puan>=7, sayfa 1..2.
-- korku(27) ve TV filmi(10770) her zaman haric; aile'de ayrica suc(80) ve savas(10752) haric.
-- Her sorgu rastgele bir sayfa ceker (1..pencere), yani aday havuzu o turda sadece birkac yuz film.
+## Filmoda'da bugun olanlar
+Ruh hali + kiminle + sure (Fark etmez varsayilan) -> 3 oneri; Kararsizim (tek film); Birlikte izleyelim (baglanti, iki ruh hali -> ortak 3 film); film detayi (fragman, nerede izlenir, benzer filmler, kadro vs.); Kaydet/Listem + Izledim; Ara; paylasim karti + film baglantisi (tiklayinca film acilir); cihazda zevk ogrenme (localStorage, sunucu yok); reklamsiz, hesapsiz, sunucusuz, Play veri guvenligi: hicbir kullanici verisi toplanmiyor.
 
-## Benim tespitlerim
-1. 2548 sayisi "sartlari gecen" film sayisi. Ama uygulama sayfa penceresi yuzunden hepsine ulasmiyor: pop sorgusu sadece ilk 6 sayfa (en popüler 120), vote_average sorgulari sadece ilk 3 sayfa (60), tr 2 sayfa (40). Gercek erisilebilir film sayisi 2548'den cok daha az (olcmedim, ~birkac yuz/kombinasyon).
-2. "Iyi film" sayisi 2548'den fazla: oy esigi az oy almis ama guzel filmleri (klasik, yabanci, bagimsiz) eliyor.
-3. Aile havuzu 422: sik kullanan aile ayni filmleri gorebilir.
+## Kisitlar
+- Filmoda'nin vaadi: reklamsiz, hesapsiz, SUNUCUSUZ, kullanici verisi toplamiyor. Kadife (Gemini + Worker sunucusu), takip/bulten (bildirim/sunucu), "rafimi gonder" senkron (sunucu/baglanti) bu vaade ters veya sunucu gerektirir.
+- Filmoda ozgun ve sade; Sinema Odasi gibi "devasa" olmamali (patron: "camur olmasin"). Ayrica Play, birbirine cok benzeyen iki uygulamayi (ayni gelistirici) "spam/kopya" sayabilir; Filmoda kendi kimligini korumali.
+- Testcilerin cogu 45+, az geri bildirim geliyor; gercek veri uretimden sonra gelecek.
 
 ## Sorularim
-1. Sayfa pencerelerini genisletmek (ornegin pop 6→20, vote_average 3→10) kaliteyi dusurmeden cesitliligi artirir mi? Sartlar (oy/puan esikleri) ayni kaldigi icin evet mi diyorum; ters etki var mi (cok eski/obskur filmlerin one cikmasi, popularity sirasi yuzunden ilk sayfalardaki "garanti" filmlerin seyrelmesi)? EKLE/EKLEME karari (burada "EKLEME" = ayari degistirme).
-2. Oy esiklerini dusurmek (700→300) mi, pencereyi genisletmek mi, ikisi mi? Hangisi kalite riski acisindan daha guvenli?
-3. Aile havuzu 422: surekli ayni film riski gercek mi? Aile icin tur/sartlari genisletmeli miyiz (ornegin Macera/Komedi + aile uyumlu), yoksa dokunmayalim mi? (Yas sertifikasi kullanmiyoruz, tur filtresi var; riski artirmayalim.)
-4. Hangi olcumu yapip karar verelim? (ornek: reel erisilebilir film sayisi, oncesi/sonrasi, ve 100 rastgele turda tekrar eden film orani). Kisa bir test plani oner.
-5. Bu degisiklik "tum iyi filmlere hakim olma" hedefi icin yeterli mi, yoksa patronun hedefi (bir seyi atlamayalim) yaniltici mi? Durust ol.
+1. Bu envanterden Filmoda'ya EKLENMESI deger olan var mi? Her aday icin: rakipte var mi/kullanici memnun mu, gercek aci mi, kazanc, kac tik/eleman ekler, neyi sadelestirebiliriz. Benim on-listem: (a) Listem'i dosyaya yedekle/geri yukle (veri kaybi riski: TWA/tarayici verisi silinirse liste gider), (b) Izledim'e hizli puan (1-5) ile zevk ogrenmeyi guclendirme, (c) "Yakinda vizyonda" (hesapsiz, sadece TMDB). Hangileri EKLE, hangileri EKLEME? Baska aday gor.
+2. Hangilerini kesinlikle REDDEDIYORSUN ve neden (ozellikle Kadife, takip/bulten, pasaport/rozet/gorev, Sahne, atolye)? Bunlar "Filmoda'yi cok ozellikli yapar" tuzagi mi?
+3. Gercek aci olabilecek ama veri olmayan bir sey var mi? Karari 4 Aralik sonrasina (gercek kullanici verisi) birakmalı miyiz? Dur ve durust ol: simdi hicbir sey eklememek de gecerli bir cevap.
+4. Filmoda ile Sinema Odasi'nin Play'de "kopya/spam" sayilma riskini azaltmak icin ayrim cizgisi ne olmali?
 
-Kisa, en fazla 5 madde, veriyle itiraz et.
+Kisa, en fazla 5 madde, veriyle itiraz et, ilkeyi bozma.
