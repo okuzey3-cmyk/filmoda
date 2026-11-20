@@ -810,7 +810,7 @@ function detay(d){
   var names=po.ab.concat(po.ki,po.sa);
   platKaydet(d.id,po);
   function satir(baslik,arr,cls){return arr.length?'<div class="plk">'+baslik+'</div><div class="plat">'+arr.map(function(n){return '<span'+(cls?' class="'+cls+'"':'')+'>'+esc(n)+'</span>'}).join("")+'</div>':""}
-  var platHtml=names.length?satir("Abonelikle izle",po.ab,"ab")+satir("Kirala",po.ki)+satir("Satın al",po.sa):'<div class="plat"><span>Türkiye\'de şu an bir platformda görünmüyor</span></div>';
+  var platHtml=names.length?satir("Üyeliğinle izle (ek ücret yok)",po.ab,"ab")+satir("Tek seferlik ücretle izle (genelde 48 saat)",po.ki)+satir("Ücretle satın al (hep senin olur)",po.sa):'<div class="plat"><span>Türkiye\'de şu an bir platformda görünmüyor</span></div>';
   var vids=(d.videos&&d.videos.results)||[];
   var tv=vids.filter(function(v){return v.site==="YouTube"&&v.type==="Trailer"});
   var tvt=tv.filter(function(v){return v.iso_639_1==="tr"})[0]||tv[0]||vids.filter(function(v){return v.site==="YouTube"})[0];
@@ -940,7 +940,7 @@ function platSatir(f){
   var h='<div class="pl">';
   if(f.pg&&f.pg.length&&Date.now()-(f.pgt||0)<30*86400000)h+='<i>Platformdan kalktı: '+esc(f.pg.join(", "))+'. </i>';
   if(f.pl&&f.pl.length)h+='<b>'+esc(f.pl.join(" · "))+'</b>'+(f.pn&&f.pn.length&&Date.now()-(f.pnt||0)<14*86400000?' <i>(yeni eklendi)</i>':'');
-  else h+=f.pk?'Sadece kiralık / satın alınabilir':'Şu an bir platformda yok';
+  else h+=f.pk?'Sadece ücret ödeyerek izlenebiliyor':'Şu an bir platformda yok';
   return h+' · '+zamanYazi(f.pc)+'</div>';
 }
 function setTab(t){tab=t;$("t-izlenecek").setAttribute("aria-pressed",t==="izlenecek");$("t-izlendi").setAttribute("aria-pressed",t==="izlendi");renderListe()}
