@@ -392,6 +392,7 @@ function skorla(f,ctx){
   var pers=squash(gsum(g,ctx.prof.t)/Math.sqrt(Math.max(g.length,1)),2.5);
   f._pers=pers;
   var s=base*(1-ctx.prof.lam)+pers*ctx.prof.lam;
+  if(ctx.l2)s+=.30*Math.min(1,L2.n/8)*l2Bonus(f);
   var sh=T.shown[f.id];if(sh)s-=.35*Math.exp(-((ctx.now-sh)/GUN)/12);
   var rj=T.rej[f.id];if(rj&&ctx.now-rj<45*GUN)s-=.5;
   return s;
@@ -416,6 +417,7 @@ function sec(pool,n,ctx,keep){
 function neden(f,i,ctx){
   if(f._kesif)return "Alışkın olmadığın bir tat: küçük bir sürpriz.";
   if(f._b)return "Beğendiğin "+f._b+" filmini sevenlere de gidiyor.";
+  if(f._l2n)return f._l2n;
   if(f._pers>.72&&ctx.prof.lam>.1)return "Zevkine yakın görünüyor.";
   if(f._gem)return "Az bilinen, ama çok sevilen bir film.";
   if(f.original_language==="tr")return "Yerli yapım, sevilen bir film.";
@@ -444,6 +446,19 @@ function havuz(){
     getir({sort_by:"vote_average.desc","vote_count.gte":"800","vote_count.lte":"5000","vote_average.gte":"7.3"},3),
     getir({with_original_language:"tr",sort_by:"popularity.desc","vote_count.gte":"200","vote_average.gte":"7"},2)
   ];
+  /* seviye 2: sevdigin yonetmen/oyuncu/konu cizgisinden aday */
+  if(l2Aktif()){
+    var tp=l2Top("dir",3).concat(l2Top("act",3)),tk=l2Top("kw",3);
+    var ex2={sort_by:"vote_average.desc","vote_count.gte":"500","vote_average.gte":"6.9"};
+    function g2(extra){
+      var p={include_adult:"false",without_genres:yasak};
+      if(max)p["with_runtime.lte"]=String(max);
+      Object.keys(ex2).forEach(function(k){p[k]=ex2[k]});Object.keys(extra).forEach(function(k){p[k]=extra[k]});
+      return tmdb("/discover/movie",p).then(function(d){var r=(d.results||[]).slice(0,12);r.forEach(function(x){x._p=1});return r}).catch(function(){return []});
+    }
+    if(tp.length)isler.push(g2({with_people:tp.join("|")}));
+    if(tk.length)isler.push(g2({with_keywords:tk.join("|")}));
+  }
   /* begendiklerine benzer: "Beğendim" dedigin filmlerin TMDB onerileri */
   var begen=store.izlendi.filter(function(f){return f.r==="b"});
   begen.sort(function(){return Math.random()-.5});
@@ -480,6 +495,17 @@ function oneri(o){
     var liste=pool.filter(function(f){return uygun(f,true)});
     if(liste.length<n+3)liste=pool.filter(function(f){return uygun(f,false)});
     var ctx={mw:MW[S.mood],cw:CW[S.kim],prof:profil(),now:Date.now(),rnd:Math.random};
+    if(!l2Aktif())return sonSec(liste,n,keep,ctx);
+    /* seviye 2: en iyi adaylarin kadro/anahtar kelimelerini al (en cok 4,5 sn bekle) */
+    var c1={mw:ctx.mw,cw:ctx.cw,prof:ctx.prof,now:ctx.now,rnd:ctx.rnd};
+    var ust=liste.map(function(f){return {f:f,s:skorla(f,c1)}}).sort(function(a,b){return b.s-a.s}).slice(0,12).map(function(x){return x.f});
+    liste.filter(function(f){return f._p&&ust.indexOf(f)<0}).slice(0,5).forEach(function(f){ust.push(f)});
+    var al=ust.filter(function(f){return !L2.C[f.id]}).slice(0,12);
+    var bekle=Promise.all(al.map(function(f){return ozellikGetir(f.id).catch(function(){return null})}));
+    var zaman=new Promise(function(r){setTimeout(r,4500)});
+    return Promise.race([bekle,zaman]).then(function(){l2Save();ctx.l2=1;return sonSec(liste,n,keep,ctx)});
+  });
+  function sonSec(liste,n,keep,ctx){
     var res;
     if(n>=3&&ctx.prof.lam>.1){
       res=sec(liste,n-1,ctx,keep);
@@ -488,9 +514,9 @@ function oneri(o){
       var kesif=sec(rest,1,c0,keep.concat(res));
       if(kesif[0]){kesif[0]._kesif=1;res.push(kesif[0])}
     }else res=sec(liste,n,ctx,keep);
-    res.forEach(function(f,i){f._why=neden(f,keep.length?keep.length:i,ctx)});
+    res.forEach(function(f,i){if(ctx.l2&&!f._kesif&&!f._b)f._l2n=l2Neden(f);f._why=neden(f,keep.length?keep.length:i,ctx)});
     return res;
-  });
+  }
 }
 /* Ortuk sinyal: dokunma, fragman, listeye ekleme, atlama. Eski sinyaller zamanla soner. */
 function sinyal(k,g){
@@ -503,6 +529,7 @@ function sinyal(k,g){
 function reddet(f){
   if(!f)return;
   T.rej[f.id]=Date.now();
+  try{ogren(f,-.8)}catch(e){}
   (f.genre_ids||[]).forEach(function(g){T.sw[g]=(T.sw[g]||0)+1});
   tSave();
 }
@@ -517,6 +544,108 @@ function genleriTamamla(){
   })});
   if(isler.length)Promise.all(isler).then(save);
 }
+/* ===== SEVIYE 2: yonetmen / oyuncu / anahtar kelime / on yil / dil =====
+   Hepsi cihazda. Filmin kadro ve anahtar kelimeleri TMDB'den alinir, zevk ozeti yalnizca cihazda tutulur.
+   Agirliklar (W) kullanicinin tepkilerine gore kendiliginden ayarlanir. */
+var L2KEY="filmoda_taste2";
+var L2={F:{dir:{},act:{},kw:{},dec:{},lang:{}},W:{dir:1,act:1,kw:1,dec:1,lang:1},C:{},n:0};
+try{var l0=JSON.parse(localStorage.getItem(L2KEY)||"null");if(l0&&typeof l0==="object"){
+  ["dir","act","kw","dec","lang"].forEach(function(k){L2.F[k]=(l0.F&&l0.F[k])||{};L2.W[k]=(l0.W&&typeof l0.W[k]==="number")?l0.W[k]:1});
+  L2.C=l0.C||{};L2.n=l0.n||0}}catch(e){}
+var L2BW={dir:.30,act:.22,kw:.28,dec:.08,lang:.06};
+function l2Save(){
+  var ks=Object.keys(L2.C);
+  if(ks.length>150){ks.sort(function(a,b){return (L2.C[a].t||0)-(L2.C[b].t||0)}).slice(0,ks.length-150).forEach(function(k){delete L2.C[k]})}
+  try{localStorage.setItem(L2KEY,JSON.stringify(L2))}catch(e){}
+}
+/* TMDB ayrintisindan (credits+keywords eklenmis) kucuk ozellik kaydi */
+function ozellik(d){
+  if(!d||!d.id)return null;
+  var cr=d.credits||{},kw=(d.keywords&&(d.keywords.keywords||d.keywords.results))||[];
+  var dirs=(cr.crew||[]).filter(function(x){return x.job==="Director"}).slice(0,2);
+  var cast=(cr.cast||[]).slice(0,4);
+  var o={d:dirs.map(function(x){return x.id}),dn:dirs.map(function(x){return x.name}),
+    a:cast.map(function(x){return x.id}),an:cast.map(function(x){return x.name}),
+    k:kw.slice(0,12).map(function(x){return x.id}),t:Date.now()};
+  L2.C[d.id]=o;return o;
+}
+function ozellikGetir(id){
+  if(L2.C[id])return Promise.resolve(L2.C[id]);
+  return tmdb("/movie/"+id,{append_to_response:"credits,keywords"}).then(function(d){var o=ozellik(d);l2Save();return o});
+}
+function fkey(k,o,f){
+  if(k==="dir")return o?o.d:[];
+  if(k==="act")return o?o.a:[];
+  if(k==="kw")return o?o.k:[];
+  if(k==="dec")return f&&f.release_date?[dec(f)]:[];
+  if(k==="lang")return f&&f.original_language?[f.original_language]:[];
+  return [];
+}
+/* Bir filmin profile uyumu: her ozellik icin -1..1 */
+function l2Match(f,o){
+  var m={};
+  ["dir","act","kw","dec","lang"].forEach(function(k){
+    var it=fkey(k,o,f),F=L2.F[k],v=0;
+    if(!it.length){m[k]=0;return}
+    it.forEach(function(i){v+=F[i]||0});
+    var sc={dir:3,act:3,kw:3,dec:4,lang:5}[k];
+    if(k==="kw"||k==="act")v=v/Math.sqrt(it.length);
+    m[k]=Math.tanh(v/sc);
+  });
+  return m;
+}
+function l2Aktif(){return L2.n>=3}
+/* Skora eklenecek pay (-1..1 civari) */
+function l2Bonus(f){
+  if(!l2Aktif())return 0;
+  var o=L2.C[f.id],m=l2Match(f,o),s=0,tw=0;
+  Object.keys(L2BW).forEach(function(k){
+    if((k==="dir"||k==="act"||k==="kw")&&!o)return;
+    s+=L2.W[k]*L2BW[k]*m[k];tw+=L2BW[k]});
+  return tw?s/tw:0;
+}
+/* Tepkiden ogren: w>0 hoslandi, w<0 hoslanmadi. Agirlik ve profil birlikte guncellenir. */
+function l2Ogren(f,o,w){
+  if(!f||!w)return;
+  var m=l2Match(f,o),ks=["dir","act","kw","dec","lang"];
+  if(L2.n>=3){
+    var ort=0;ks.forEach(function(k){ort+=m[k]});ort/=ks.length;
+    ks.forEach(function(k){
+      if(!o&&(k==="dir"||k==="act"||k==="kw"))return;
+      L2.W[k]=clamp(L2.W[k]+.06*(w>0?1:-1)*Math.min(Math.abs(w),2)/2*(m[k]-ort),.4,1.8)});
+  }
+  ks.forEach(function(k){
+    var F=L2.F[k];
+    Object.keys(F).forEach(function(i){F[i]*=.97;if(Math.abs(F[i])<.05)delete F[i]});
+    fkey(k,o,f).forEach(function(i){F[i]=(F[i]||0)+w});
+    var all=Object.keys(F);
+    if(all.length>60)all.sort(function(a,b){return Math.abs(F[a])-Math.abs(F[b])}).slice(0,all.length-60).forEach(function(i){delete F[i]});
+  });
+  L2.n+=Math.min(Math.abs(w),2)>=.5?1:.5;
+  l2Save();
+}
+/* f: film (id, genre_ids, release_date, original_language olabilir); d: biliniyorsa tam ayrinti */
+function ogren(f,w,d){
+  if(!f||!f.id)return;
+  var base={id:f.id,release_date:f.release_date||(d&&d.release_date),original_language:f.original_language||(d&&d.original_language)};
+  if(d&&d.credits){var o=ozellik(d);l2Ogren(base,o,w);return}
+  ozellikGetir(f.id).then(function(o){
+    if(!base.release_date||!base.original_language){}
+    l2Ogren(base,o,w)}).catch(function(){l2Ogren(base,null,w)});
+}
+/* En cok sevilen kisi/anahtar kelime: aday arama ve "neden" cumlesi icin */
+function l2Top(k,n){
+  var F=L2.F[k];return Object.keys(F).filter(function(i){return F[i]>=1.2}).sort(function(a,b){return F[b]-F[a]}).slice(0,n);
+}
+function l2Neden(f){
+  var o=L2.C[f.id];if(!o||!l2Aktif())return null;
+  var best=null,bv=1.2;
+  o.d.forEach(function(i,x){var v=L2.F.dir[i]||0;if(v>bv){bv=v;best="Sevdiğin yönetmen "+o.dn[x]+" imzalı."}});
+  o.a.forEach(function(i,x){var v=L2.F.act[i]||0;if(v>bv+.3){bv=v;best=o.an[x]+" oynuyor, zevkine yakın bir isim."}});
+  if(!best){var kv=0;o.k.forEach(function(i){kv+=Math.max(0,L2.F.kw[i]||0)});if(kv>=2.5)best="Sevdiğin filmlerle aynı konu çizgisinde."}
+  return best;
+}
+/* ===== /SEVIYE 2 ===== */
 /* ===== /ONERI MOTORU ===== */
 
 function paramsBasit(){
@@ -612,7 +741,8 @@ function ac(f){
   sh.scrollTop=0;
   $("scrim").classList.add("on");sh.classList.add("on");$("cl").onclick=kapat;$("cl").focus();
   if(!(history.state&&history.state.sheet))history.pushState({sheet:1},"");
-  tmdb("/movie/"+f.id,{append_to_response:"videos,watch/providers,recommendations",include_video_language:"tr,en,null"}).then(function(d){
+  tmdb("/movie/"+f.id,{append_to_response:"videos,watch/providers,recommendations,credits,keywords",include_video_language:"tr,en,null"}).then(function(d){
+    try{ozellik(d);l2Save();ogren(f,.3,d)}catch(e){}
     return (d.overview?Promise.resolve(d):fetch(API+"/movie/"+f.id+"?language=en-US&api_key="+KEY).then(function(r){return r.json()}).then(function(e){d.overview=e.overview||"";return d})).then(detay);
   }).catch(function(){
     var b=sh.querySelector(".sbody p.ov");if(b)b.textContent="Ayrıntılar yüklenemedi. İnternet bağlantını kontrol et.";
@@ -648,16 +778,16 @@ function detay(d){
    '<button class="cta ghost" id="pa">Arkadaşına gönder</button>'+
    (it?(seen?'<div class="rx"><button class="chip" id="rb" aria-pressed="'+(it.r==="b")+'">Beğendim</button><button class="chip" id="rn" aria-pressed="'+(it.r==="n")+'">Beğenmedim</button></div>':'')+'<textarea class="note" id="nt" rows="2" maxlength="200" placeholder="Not ekle (örn. Bunu Ahmet önermişti)">'+esc(it.n||"")+'</textarea>':'')+
    (sim.length?'<div class="label">Benzer filmler</div><div class="sim" id="sim"></div>':'');
-  if(tvt&&$("fr"))$("fr").onclick=function(){sinyal("fr",f.g);fragman(tvt.key,link,d)};
-  $("ad").onclick=function(){if(!inList("izlenecek",f.id))sinyal("ad",f.g);toggle("izlenecek",f);ac2(d)};
+  if(tvt&&$("fr"))$("fr").onclick=function(){sinyal("fr",f.g);ogren(d,.8,d);fragman(tvt.key,link,d)};
+  $("ad").onclick=function(){if(!inList("izlenecek",f.id)){sinyal("ad",f.g);ogren(d,1,d)}toggle("izlenecek",f);ac2(d)};
   $("iz").onclick=function(){
     var eski=store.izlenecek.filter(function(x){return x.id===f.id})[0];
     if(!inList("izlendi",f.id)&&eski&&eski.n)f.n=eski.n;
-    toggle("izlendi",f);if(inList("izlendi",f.id)){remove("izlenecek",f.id);izlendiSay(d)}ac2(d)};
+    toggle("izlendi",f);if(inList("izlendi",f.id)){remove("izlenecek",f.id);izlendiSay(d);ogren(d,.7,d)}ac2(d)};
   $("pa").onclick=function(){paylas(d,names)};
   if($("nt"))$("nt").onchange=function(){it.n=$("nt").value.trim();if(!it.n)delete it.n;save();renderListe()};
   if($("rb")){
-    var rx=function(v){it.r=it.r===v?null:v;if(!it.r)delete it.r;save();$("rb").setAttribute("aria-pressed",it.r==="b");$("rn").setAttribute("aria-pressed",it.r==="n");renderListe()};
+    var rx=function(v){var onc=it.r;it.r=it.r===v?null:v;if(it.r&&it.r!==onc)ogren(d,it.r==="b"?2:-2,d);if(!it.r)delete it.r;save();$("rb").setAttribute("aria-pressed",it.r==="b");$("rn").setAttribute("aria-pressed",it.r==="n");renderListe()};
     $("rb").onclick=function(){rx("b")};$("rn").onclick=function(){rx("n")};
   }
   if(sim.length){var sb=$("sim");sim.forEach(function(x){
