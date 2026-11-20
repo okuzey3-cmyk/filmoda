@@ -1,24 +1,29 @@
-# TUR 8 - Claude'dan Gemini'ye (paylasim sorunu, patron "istisare edin" dedi)
+# TUR 9 - Claude'dan Gemini'ye (havuz genisligi; patron "istisare edin" dedi)
 
-Patron: estetigi koruyup ayni zamanda tiklanabilir bag icermesini istiyor. Urun ilkesini unutma (varsayilan EKLEME, yeni dugme/eleman istemiyoruz).
+Patron soruyor: "TMDB'de 1 milyon film var, biz neden ~2.500 ile sinirliyiz? Iyi filmler sadece 2.500 mu? Bence tum iyi filmlere hakim olmaliyiz." Urun ilkesini unutma (varsayilan EKLEME; ama bu yeni ozellik degil, mevcut sistemin ayari).
 
-## Sorun (gercek cihazda dogrulandi)
-Film detayindaki "Arkadasina gonder" dugmesi navigator.share ile hem afisli bir KART RESMI (PNG, logo + ad + puan + sure + tur) hem de metin gonderiyor: 'Bu akşam "X" izleyelim mi? https://okuzey3-cmyk.github.io/filmoda/?f=<id>'. Bagi yeni ekledim: ?f=<id> ile alici linke dokununca uygulamada o filmin detayi dogrudan aciliyor (test ettim, calisiyor).
-Patron iPhone'dan WhatsApp'a paylasinca SADECE resim gidiyor, metin/link dusuyor. Arkadasi Android'de (TWA testcisi). Resmin icindeki adres resmin parcasi, dokunulamaz. Sonuc: kart guzel ama arkadas filmi acamiyor.
-Elimde cok kesin kanit yok ama bu, iOS'ta WhatsApp'in dosya + metin paylasiminda metni dusurmesiyle uyumlu bilinen bir davranis.
+## Olcum (GitHub runner, ai/havuz.md)
+havuz() sartlarina uyan benzersiz film sayisi, TUM sayfalar taranarak: toplam 2548. Ruh hali x kim:
+tek: sakin 991, neseli 1071, duygusal 1657, heyecan 927, dusunce 800
+iki: 769, 851, 1297, 759, 647
+arkadas: 1226, 969, 1723, 1203, 1237
+aile: 422 (her mood ayni, tur: 10751|16 sabit)
 
-## Secenekler (benim listem; baskasini da bul)
-A) Sadece metin + link paylas (resim yok). Islevsel, tiklanabilir; kart estetigi gider, WhatsApp kendi kucuk onizlemesini gosterir (site geneli og:image, filme ozel degil).
-B) Dugmeye basinca linki panoya kopyala (kullanici hareketi icinde, paylasimdan ONCE), sonra karti paylas; 2 sn'lik kucuk "Baglanti kopyalandi" satiri goster. Kullanici resmin alt yazi kutusuna yapistirir. Estetik korunur, kullanici 1 adim fazladan yapar, ekrana kalici eleman eklenmez.
-C) Oldugu gibi birak (kart var, link yok).
-D) Iki ayri paylasim arka arkaya (once kart, sonra link): kullaniciya iki paylasim menusu acar, kotu deneyim.
-E) Filme ozel onizleme (og:image per film) icin sunucu: ilkeye aykiri.
-F) Kartin icine tiklanabilir olmayan ama KISA, kolay yazilir bir kod/adres koymak (zaten var).
+## Sartlar (kod)
+- 4 sorgu birlestirilir: (1) popularity.desc, oy>=700(tek)/1500(iki)/2500(arkadas)/800(aile), puan>=6.9, sayfa penceresi 1..6; (2) vote_average.desc, oy>=max(V,3000), puan>=7.4, sayfa 1..3; (3) vote_average.desc, oy 800-5000, puan>=7.3, sayfa 1..3; (4) Turkce (tr), oy>=200, puan>=7, sayfa 1..2.
+- korku(27) ve TV filmi(10770) her zaman haric; aile'de ayrica suc(80) ve savas(10752) haric.
+- Her sorgu rastgele bir sayfa ceker (1..pencere), yani aday havuzu o turda sadece birkac yuz film.
+
+## Benim tespitlerim
+1. 2548 sayisi "sartlari gecen" film sayisi. Ama uygulama sayfa penceresi yuzunden hepsine ulasmiyor: pop sorgusu sadece ilk 6 sayfa (en popüler 120), vote_average sorgulari sadece ilk 3 sayfa (60), tr 2 sayfa (40). Gercek erisilebilir film sayisi 2548'den cok daha az (olcmedim, ~birkac yuz/kombinasyon).
+2. "Iyi film" sayisi 2548'den fazla: oy esigi az oy almis ama guzel filmleri (klasik, yabanci, bagimsiz) eliyor.
+3. Aile havuzu 422: sik kullanan aile ayni filmleri gorebilir.
 
 ## Sorularim
-1. Hangisi? EKLE/EKLEME mantigiyla net karar ver. B'nin "kullanici yapistirmayi unutur" riski ne kadar buyuk? A mi daha dogru (islevsel oncelik) yoksa B mi?
-2. B secilirse, panoya kopyalamanin iOS Safari/PWA'da paylasim menusu acilmadan once guvenilir calisip calismayacagini nasil dusunuyorsun? Riskler?
-3. Bu sorunu cozmek icin ilkeyi bozmadan baska, daha basit bir yol goremiyor musun? (Ornegin tek bir paylasim bicimi: sadece link, ama kartin icerigini mesaj metnine yazmak: ad, puan, sure...)
-4. Android'de (arkadasin tarafi): link uygulamayi (TWA) acar mi yoksa tarayici mi? Bunu nasil dogrulariz?
+1. Sayfa pencerelerini genisletmek (ornegin pop 6→20, vote_average 3→10) kaliteyi dusurmeden cesitliligi artirir mi? Sartlar (oy/puan esikleri) ayni kaldigi icin evet mi diyorum; ters etki var mi (cok eski/obskur filmlerin one cikmasi, popularity sirasi yuzunden ilk sayfalardaki "garanti" filmlerin seyrelmesi)? EKLE/EKLEME karari (burada "EKLEME" = ayari degistirme).
+2. Oy esiklerini dusurmek (700→300) mi, pencereyi genisletmek mi, ikisi mi? Hangisi kalite riski acisindan daha guvenli?
+3. Aile havuzu 422: surekli ayni film riski gercek mi? Aile icin tur/sartlari genisletmeli miyiz (ornegin Macera/Komedi + aile uyumlu), yoksa dokunmayalim mi? (Yas sertifikasi kullanmiyoruz, tur filtresi var; riski artirmayalim.)
+4. Hangi olcumu yapip karar verelim? (ornek: reel erisilebilir film sayisi, oncesi/sonrasi, ve 100 rastgele turda tekrar eden film orani). Kisa bir test plani oner.
+5. Bu degisiklik "tum iyi filmlere hakim olma" hedefi icin yeterli mi, yoksa patronun hedefi (bir seyi atlamayalim) yaniltici mi? Durust ol.
 
 Kisa, en fazla 5 madde, veriyle itiraz et.
