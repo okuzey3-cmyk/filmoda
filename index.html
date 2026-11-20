@@ -122,6 +122,12 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
 .plat{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
 .plat span{padding:6px 12px;border-radius:10px;background:var(--surface2);font-size:13px}
 .src{font-size:11px;color:var(--muted);margin-bottom:18px}
+.src a{color:var(--muted)}
+.plk{font-size:12px;color:var(--muted);margin:2px 0 6px}
+.plat span.ab{background:rgba(224,138,158,.18);color:var(--text,#EFE8EC);font-weight:600}
+.row .pl{font-size:12px;margin-top:4px;color:var(--muted)}
+.row .pl b{color:#E08A9E;font-weight:600}
+.row .pl i{font-style:normal;color:#E3B76F}
 .trl{position:fixed;inset:0;z-index:20;background:#0b080d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px;animation:trin .3s ease}
 .trbg{position:absolute;inset:0;background:var(--bd) center/cover;filter:blur(26px) brightness(.35) saturate(1.2);transform:scale(1.15)}
 .trl>*{position:relative}
@@ -733,6 +739,52 @@ $("rail").addEventListener("scroll",function(){
   [].forEach.call($("dots").children,function(d,i){d.className=i===best?"on":""});
 });
 
+/* Platformlar: Türkiye icin abonelik / kiralama / satin alma ayri ayri */
+function platAyir(wp){
+  var tr=(wp&&wp.results&&wp.results.TR)||null,o={ab:[],ki:[],sa:[],link:tr&&tr.link||""};
+  if(!tr)return o;
+  function al(k,arr){(tr[k]||[]).sort(function(a,b){return (a.display_priority||0)-(b.display_priority||0)}).forEach(function(p){if(arr.indexOf(p.provider_name)<0)arr.push(p.provider_name)})}
+  al("flatrate",o.ab);al("free",o.ab);al("ads",o.ab);al("rent",o.ki);al("buy",o.sa);
+  o.ki=o.ki.filter(function(x){return o.ab.indexOf(x)<0});
+  o.sa=o.sa.filter(function(x){return o.ab.indexOf(x)<0&&o.ki.indexOf(x)<0});
+  return o;
+}
+/* Listedeki filmin platform kaydini guncelle; abonelikten kalkan/eklenen platformu not et */
+function platKaydet(id,o){
+  var now=Date.now(),degisti=false;
+  ["izlenecek","izlendi"].forEach(function(k){store[k].forEach(function(x){
+    if(x.id!==id)return;
+    if(x.pl&&x.pc){
+      var gitti=x.pl.filter(function(n){return o.ab.indexOf(n)<0});
+      var geldi=o.ab.filter(function(n){return x.pl.indexOf(n)<0});
+      if(gitti.length){x.pg=gitti;x.pgt=now}
+      if(geldi.length){x.pn=geldi;x.pnt=now}
+      if(x.pg)x.pg=x.pg.filter(function(n){return o.ab.indexOf(n)<0});
+      if(x.pg&&!x.pg.length)delete x.pg;
+    }
+    x.pl=o.ab.slice(0,4);x.pk=o.ki.length||o.sa.length?1:0;x.pc=now;degisti=true;
+  })});
+  if(degisti)save();
+}
+var platSira=false;
+function platYenile(){
+  if(platSira||!navigator.onLine)return;
+  var now=Date.now(),hepsi=store.izlenecek.concat(store.izlendi.filter(function(x){return x.pl&&x.pl.length}));
+  var eski=hepsi.filter(function(x){return !x.pc||now-x.pc>12*3600000}).sort(function(a,b){return (a.pc||0)-(b.pc||0)}).slice(0,15);
+  if(!eski.length)return;
+  platSira=true;var i=0;
+  function sonraki(){
+    if(i>=eski.length){platSira=false;if(!$("v-liste").classList.contains("hide"))renderListe();return}
+    var x=eski[i++];
+    tmdb("/movie/"+x.id+"/watch/providers").then(function(w){platKaydet(x.id,platAyir({results:w.results}))}).catch(function(){}).then(function(){setTimeout(sonraki,250)});
+  }
+  sonraki();
+}
+function zamanYazi(t){
+  if(!t)return "";var d=Math.round((Date.now()-t)/60000);
+  if(d<2)return "az önce";if(d<60)return d+" dk önce";var h=Math.round(d/60);if(h<24)return h+" saat önce";return Math.round(h/24)+" gün önce";
+}
+
 /* Detay */
 function ac(f){
   S.opened=S.opened||{};S.opened[f.id]=1;sinyal("op",f.genre_ids);
@@ -754,9 +806,11 @@ function detay(d){
   var bg=d.backdrop_path||d.poster_path;
   hero.innerHTML="";
   if(bg){var im=new Image();im.alt="";im.src=IMG+"w780"+bg;im.onerror=function(){im.remove()};hero.appendChild(im)}
-  var tr=(d["watch/providers"]&&d["watch/providers"].results&&d["watch/providers"].results.TR)||null;
-  var names=[];
-  if(tr){["flatrate","rent","buy"].forEach(function(k){(tr[k]||[]).forEach(function(p){if(names.indexOf(p.provider_name)<0)names.push(p.provider_name)})})}
+  var po=platAyir(d["watch/providers"]);
+  var names=po.ab.concat(po.ki,po.sa);
+  platKaydet(d.id,po);
+  function satir(baslik,arr,cls){return arr.length?'<div class="plk">'+baslik+'</div><div class="plat">'+arr.map(function(n){return '<span'+(cls?' class="'+cls+'"':'')+'>'+esc(n)+'</span>'}).join("")+'</div>':""}
+  var platHtml=names.length?satir("Abonelikle izle",po.ab,"ab")+satir("Kirala",po.ki)+satir("Satın al",po.sa):'<div class="plat"><span>Türkiye\'de şu an bir platformda görünmüyor</span></div>';
   var vids=(d.videos&&d.videos.results)||[];
   var tv=vids.filter(function(v){return v.site==="YouTube"&&v.type==="Trailer"});
   var tvt=tv.filter(function(v){return v.iso_639_1==="tr"})[0]||tv[0]||vids.filter(function(v){return v.site==="YouTube"})[0];
@@ -771,8 +825,8 @@ function detay(d){
    '<div class="genres">'+genres+'</div>'+
    '<p class="ov">'+(esc(d.overview)||"Bu film için özet bulunamadı.")+'</p>'+
    '<div class="label" style="margin-top:0">Nerede izlenir</div>'+
-   '<div class="plat">'+(names.length?names.map(function(n){return "<span>"+esc(n)+"</span>"}).join(""):"<span>Türkiye için bilgi yok</span>")+'</div>'+
-   '<div class="src">Yayın bilgisi: JustWatch</div>'+
+   platHtml+
+   '<div class="src">Az önce kontrol edildi · Kaynak: '+(po.link?'<a href="'+esc(po.link)+'" target="_blank" rel="noopener">JustWatch</a>':'JustWatch')+' (günlük güncellenir; izlemeden önce platformda da bakmanı öneririz)</div>'+
    '<div class="btns">'+(tvt?'<button id="fr">Fragmanı izle</button>':'<a href="'+link+'" target="_blank" rel="noopener">Fragmanı izle</a>')+'<button class="main" id="ad">'+(inL?"Listemde ✓":"Listeme ekle")+'</button></div>'+
    '<button class="cta ghost" id="iz">'+(seen?"İzledim ✓":"İzledim olarak işaretle")+'</button>'+
    '<button class="cta ghost" id="pa">Arkadaşına gönder</button>'+
@@ -878,8 +932,16 @@ function renderListe(){
     var b=el("button","row");
     var th=el("div","th");if(f.pp){var im=new Image();im.alt="";im.loading="lazy";im.src=IMG+"w185"+f.pp;im.onerror=function(){im.remove()};th.appendChild(im)}
     b.appendChild(th);
-    b.appendChild(el("div","t",'<h3>'+esc(f.t)+'</h3><div class="meta" style="margin:2px 0 0"><span style="color:var(--gold);font-weight:600">★ '+(f.v||0).toFixed(1)+'</span><span>'+esc(f.y)+'</span>'+(f.r==="b"?'<span>Beğendim</span>':f.r==="n"?'<span>Beğenmedim</span>':'')+'</div>'+(f.n?'<div class="nt">'+esc(f.n)+'</div>':'')));
+    b.appendChild(el("div","t",'<h3>'+esc(f.t)+'</h3><div class="meta" style="margin:2px 0 0"><span style="color:var(--gold);font-weight:600">★ '+(f.v||0).toFixed(1)+'</span><span>'+esc(f.y)+'</span>'+(f.r==="b"?'<span>Beğendim</span>':f.r==="n"?'<span>Beğenmedim</span>':'')+'</div>'+(f.n?'<div class="nt">'+esc(f.n)+'</div>':'')+platSatir(f)));
     b.onclick=function(){ac({id:f.id,title:f.t})};box.appendChild(b)});
+}
+function platSatir(f){
+  if(!f.pc)return "";
+  var h='<div class="pl">';
+  if(f.pg&&f.pg.length&&Date.now()-(f.pgt||0)<30*86400000)h+='<i>Platformdan kalktı: '+esc(f.pg.join(", "))+'. </i>';
+  if(f.pl&&f.pl.length)h+='<b>'+esc(f.pl.join(" · "))+'</b>'+(f.pn&&f.pn.length&&Date.now()-(f.pnt||0)<14*86400000?' <i>(yeni eklendi)</i>':'');
+  else h+=f.pk?'Sadece kiralık / satın alınabilir':'Şu an bir platformda yok';
+  return h+' · '+zamanYazi(f.pc)+'</div>';
 }
 function setTab(t){tab=t;$("t-izlenecek").setAttribute("aria-pressed",t==="izlenecek");$("t-izlendi").setAttribute("aria-pressed",t==="izlendi");renderListe()}
 function yedekKod(){
@@ -910,7 +972,7 @@ function view(v){
     $("v-"+k).classList.toggle("hide",v!==k);
     $("n-"+k).setAttribute("aria-current",v===k?"page":"false");
   });
-  if(v==="liste")renderListe();
+  if(v==="liste"){renderListe();platYenile()}
   if(v==="ara")setTimeout(function(){$("q").focus()},50);
   window.scrollTo(0,0);
 }
@@ -952,6 +1014,7 @@ $("again").onclick=goster;
 $("back").onclick=function(){$("step2").classList.add("hide");$("step1").classList.remove("hide");$("glow").classList.remove("on");window.scrollTo(0,0)};
 
 buildChoices();
+setTimeout(platYenile,3000);
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
