@@ -45,6 +45,8 @@ h1{font-size:34px;line-height:1.1;margin-bottom:6px}
 .mood[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--surface))}
 .mood:last-child:nth-child(odd){grid-column:1/-1}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
+.alt2{margin-bottom:6px}
+.dual .label,.dual #sure,.dual #kim,.dual .alt2{display:none}
 .chip{padding:10px 16px;border-radius:999px;background:var(--surface);border:1.5px solid var(--line);font-size:15px;font-weight:500}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
 .cta{width:100%;margin-top:28px;padding:16px;border-radius:18px;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:18px}
@@ -198,14 +200,17 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
   <div class="brand"><i></i>Filmoda</div>
 
   <div id="step1">
-    <h1>Bu akşam nasılsın?</h1>
-    <p class="sub">Birkaç şey söyle, sana üç film seçelim.</p>
+    <h1 id="h1a">Bu akşam nasılsın?</h1>
+    <p class="sub" id="suba">Birkaç şey söyle, sana üç film seçelim.</p>
+    <div class="chips alt2" id="alt2"><button class="chip" id="kararsiz">Kararsızım, bana birini seç</button><button class="chip" id="birlikte">Birlikte izleyelim</button></div>
+    <button class="chip hide" id="bvaz" style="margin-bottom:14px">Vazgeç</button>
     <div class="moods" id="moods"></div>
     <div class="label">Ne kadar vaktin var?</div>
     <div class="chips" id="sure"></div>
     <div class="label">Kiminle izleyeceksin?</div>
     <div class="chips" id="kim"></div>
     <button class="cta" id="go" disabled>Filmleri getir</button>
+    <p class="sub hide" id="bmsg" style="margin-top:12px"></p>
   </div>
 
   <div id="step2" class="hide">
@@ -213,6 +218,7 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
     <p class="sub" id="rsub"></p>
     <div class="rail" id="rail"></div>
     <div class="dots" id="dots"></div>
+    <button class="cta hide" id="paylas">Sonucu arkadaşıma gönder</button>
     <button class="cta ghost" id="again">Başka öner</button>
     <button class="cta ghost" id="back">Ruh halini değiştir</button>
   </div>
@@ -281,7 +287,7 @@ var NEDEN={
  dusunce:["Bittikten sonra da konuşulacak bir film.","Zihnini oyalayan bir kurgu.","İzlerken düşündürür."]
 };
 
-var S={mood:null,sure:null,kim:null,seen:[],cur:[]};
+var S={mood:null,mood2:null,mode:null,davet:null,sure:null,kim:null,seen:[],cur:[]};
 var store={izlenecek:[],izlendi:[]};
 try{var raw=localStorage.getItem("filmoda2");if(raw){var p=JSON.parse(raw);if(p&&p.izlenecek&&p.izlendi)store=p}}catch(e){}
 function save(){try{localStorage.setItem("filmoda2",JSON.stringify(store))}catch(e){}}
@@ -339,11 +345,12 @@ function chipRow(box,list,key){
     b.onclick=function(){S[key]=o.id;[].forEach.call(box.children,function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");check();ilerle()};
     box.appendChild(b)});
 }
-function check(){$("go").disabled=!(S.mood&&S.sure&&S.kim)}
+function dualMod(){return S.mode==="davetli"||S.mode==="davetci"}
+function check(){$("go").disabled=dualMod()?!S.mood:!(S.mood&&S.sure&&S.kim)}
 /* Secimden sonra bir sonraki soruya kendiliginden kaydir */
 function ilerle(){
   var hedef,blok;
-  if(!S.sure){hedef=$("sure");}else if(!S.kim){hedef=$("kim");}else{hedef=$("go");}
+  if(!dualMod()&&!S.sure){hedef=$("sure");}else if(!dualMod()&&!S.kim){hedef=$("kim");}else{hedef=$("go");}
   var bas=hedef===$("go")?hedef:hedef.previousElementSibling;
   setTimeout(function(){
     var navH=(document.querySelector("nav")||{offsetHeight:0}).offsetHeight;
@@ -410,6 +417,7 @@ function skorla(f,ctx){
   var g=f.genre_ids||[],vc=f.vote_count||0,w=wrat(f.vote_average||0,vc);
   var q=clamp((w-6.2)/2.2,0,1);
   var mood=squash(gsum(g,ctx.mw),1.2);
+  if(ctx.mw2){var mb=squash(gsum(g,ctx.mw2),1.2);mood=.5*Math.min(mood,mb)+.5*(mood+mb)/2}
   var comp=squash(gsum(g,ctx.cw),1.0);
   var pop=clamp((Math.log(Math.max(f.popularity||1,1))/Math.LN10-1)/2,0,1);
   f._gem=(vc>=700&&vc<=6000&&w>=7.3)?1:0;
@@ -453,6 +461,7 @@ function rndInt(n){return Math.floor(Math.random()*n)}
 function havuz(){
   var m=moodOf(S.mood),max=SURE.filter(function(s){return s.id===S.sure})[0].max,kim=S.kim;
   var gen=m.g;
+  if(S.mood2){var m2=moodOf(S.mood2),u=[];m.g.split("|").concat(m2.g.split("|")).forEach(function(x){if(u.indexOf(x)<0)u.push(x)});gen=u.join("|")}
   if(kim==="aile")gen="10751|16";else if(kim==="arkadas")gen=m.g+"|35|28|12";
   var V={tek:700,iki:1500,arkadas:2500,aile:800}[kim]||1000;
   var yasak=kim==="aile"?"27,10770,80,10752":"27,10770";
@@ -472,6 +481,13 @@ function havuz(){
     getir({sort_by:"vote_average.desc","vote_count.gte":"800","vote_count.lte":"5000","vote_average.gte":"7.3"},3),
     getir({with_original_language:"tr",sort_by:"popularity.desc","vote_count.gte":"200","vote_average.gte":"7"},2)
   ];
+  /* iki kisi: her iki ruh halinden birer tur iceren filmler (Komedi+Romantik gibi) */
+  if(S.mood2){
+    var PA=m.g.split("|"),PB=moodOf(S.mood2).g.split("|"),pairs=[];
+    PA.forEach(function(a){PB.forEach(function(b){if(a!==b){var w=(MW[S.mood][a]||0)+(MW[S.mood2][b]||0)+(MW[S.mood][b]||0)+(MW[S.mood2][a]||0);pairs.push([a+","+b,w])}})});
+    pairs.sort(function(x,y){return y[1]-x[1]});
+    pairs.slice(0,3).forEach(function(pr){isler.push(getir({sort_by:"popularity.desc","vote_count.gte":String(V),"vote_average.gte":"6.7",with_genres:pr[0]},3))});
+  }
   /* seviye 2: sevdigin yonetmen/oyuncu/konu cizgisinden aday */
   if(l2Aktif()){
     var tp=l2Top("dir",3).concat(l2Top("act",3)),tk=l2Top("kw",3);
@@ -520,10 +536,10 @@ function oneri(o){
     }
     var liste=pool.filter(function(f){return uygun(f,true)});
     if(liste.length<n+3)liste=pool.filter(function(f){return uygun(f,false)});
-    var ctx={mw:MW[S.mood],cw:CW[S.kim],prof:profil(),now:Date.now(),rnd:Math.random};
+    var ctx={mw:MW[S.mood],mw2:S.mood2?MW[S.mood2]:null,cw:CW[S.kim],prof:profil(),now:Date.now(),rnd:Math.random};
     if(!l2Aktif())return sonSec(liste,n,keep,ctx);
     /* seviye 2: en iyi adaylarin kadro/anahtar kelimelerini al (en cok 4,5 sn bekle) */
-    var c1={mw:ctx.mw,cw:ctx.cw,prof:ctx.prof,now:ctx.now,rnd:ctx.rnd};
+    var c1={mw:ctx.mw,mw2:ctx.mw2,cw:ctx.cw,prof:ctx.prof,now:ctx.now,rnd:ctx.rnd};
     var ust=liste.map(function(f){return {f:f,s:skorla(f,c1)}}).sort(function(a,b){return b.s-a.s}).slice(0,12).map(function(x){return x.f});
     liste.filter(function(f){return f._p&&ust.indexOf(f)<0}).slice(0,5).forEach(function(f){ust.push(f)});
     var al=ust.filter(function(f){return !L2.C[f.id]}).slice(0,12);
@@ -536,7 +552,7 @@ function oneri(o){
     if(n>=3&&ctx.prof.lam>.1){
       res=sec(liste,n-1,ctx,keep);
       var rest=liste.filter(function(f){return res.indexOf(f)<0});
-      var c0={mw:ctx.mw,cw:ctx.cw,prof:{t:{},lam:0,n:0},now:ctx.now,rnd:ctx.rnd};
+      var c0={mw:ctx.mw,mw2:ctx.mw2,cw:ctx.cw,prof:{t:{},lam:0,n:0},now:ctx.now,rnd:ctx.rnd};
       var kesif=sec(rest,1,c0,keep.concat(res));
       if(kesif[0]){kesif[0]._kesif=1;res.push(kesif[0])}
     }else res=sec(liste,n,ctx,keep);
@@ -700,6 +716,9 @@ function goster(){
   $("rtitle").textContent=m.ad+".";
   var k=KIM.filter(function(x){return x.id===S.kim})[0].ad;
   $("rsub").textContent="Bu akşam için üç seçim. "+k+", "+SURE.filter(function(x){return x.id===S.sure})[0].ad.toLowerCase()+".";
+  if(S.mode==="tek"){$("rtitle").textContent="Kararsız kalma.";$("rsub").textContent="Bu akşam için tek öneri. Beğenmezsen aşağıdan başkasını iste."}
+  if(S.mode==="davetli"&&S.mood2){$("rtitle").textContent="İkinizin ortak seçimi.";$("rsub").textContent="Arkadaşın: "+moodOf(S.mood2).ad+". Sen: "+m.ad+". İkinize de uyan üç film."}
+  $("paylas").classList.add("hide");
   var g=$("glow");g.style.setProperty("--g",m.c);g.classList.add("on");
   var rail=$("rail");rail.innerHTML="";$("dots").innerHTML="";
   rail.appendChild(el("div","skeleton"));rail.appendChild(el("div","skeleton"));
@@ -739,6 +758,8 @@ function goster(){
     $("again").disabled=false;rail.innerHTML="";
     if(!list.length){rail.appendChild(el("div","msg","Bu seçimlere uyan film bulamadık. Süreyi ya da ruh halini değiştirip tekrar dene."));return}
     list.forEach(function(f){S.seen.push(f.id)});
+    if(S.mode==="tek")list=list.slice(0,1);
+    if(S.mode==="davetli"&&S.mood2){var ORT=["İkinizin de havasına uyuyor.","İkinizi ortada buluşturur.","Tartışmayı bitirecek seçim."];list.forEach(function(f,i){f._why=ORT[i%3]});$("paylas").classList.remove("hide")}
     gosterildi(list);
     ciz(list);
     sonKaydet();
@@ -1029,9 +1050,70 @@ $("q").addEventListener("keydown",function(e){if(e.key==="Enter"){clearTimeout(q
 /* Geri bildirim: e-posta adresi belirlenince buraya yazılacak */
 var MAIL="filmodadestek@gmail.com";
 if(MAIL){var fb=$("fb");fb.href="mailto:"+MAIL+"?subject="+encodeURIComponent("Filmoda geri bildirim");fb.hidden=false}
-$("go").onclick=goster;
+$("go").onclick=function(){
+  if(S.mode==="davetci"){davetGonder();return}
+  if(S.mode==="davetli"){S.mood2=S.davet;S.sure="fark";S.kim="iki";goster();return}
+  S.mode=null;S.mood2=null;goster();
+};
 $("again").onclick=goster;
-$("back").onclick=function(){$("step2").classList.add("hide");$("step1").classList.remove("hide");$("glow").classList.remove("on");window.scrollTo(0,0)};
+$("back").onclick=function(){modSifirla();$("step2").classList.add("hide");$("step1").classList.remove("hide");$("glow").classList.remove("on");window.scrollTo(0,0)};
+/* ===== Kararsizim + Birlikte izleyelim ===== */
+function secimSifirla(){
+  S.mood=S.sure=S.kim=null;
+  [].forEach.call(document.querySelectorAll("#step1 [aria-pressed]"),function(x){x.setAttribute("aria-pressed","false")});
+  check();
+}
+function modSifirla(){
+  var dual=dualMod();
+  S.mode=null;S.mood2=null;S.davet=null;
+  $("step1").classList.remove("dual");
+  $("h1a").textContent="Bu akşam nasılsın?";$("suba").textContent="Birkaç şey söyle, sana üç film seçelim.";
+  $("go").textContent="Filmleri getir";$("bvaz").classList.add("hide");$("bmsg").classList.add("hide");
+  if(dual)secimSifirla();
+}
+function davetLink(){return location.origin+location.pathname+"?b="+S.mood}
+function davetGonder(){
+  var link=davetLink(),metin="Bu akşam birlikte film seçelim. Önce sen nasıl olduğunu söyle:";
+  var msg=$("bmsg");msg.classList.remove("hide");
+  function kopya(){
+    try{navigator.clipboard.writeText(metin+" "+link).then(function(){msg.textContent="Bağlantı kopyalandı. Arkadaşına yapıştırıp gönder."},function(){msg.textContent=link})}
+    catch(e){msg.textContent=link}
+  }
+  if(navigator.share){navigator.share({title:"Filmoda",text:metin,url:link}).then(function(){msg.textContent="Gönderildi. Arkadaşın ruh halini seçince ortak üç filmi o görecek ve sana gönderecek."}).catch(function(){})}
+  else kopya();
+}
+function davetciBasla(){
+  secimSifirla();S.mode="davetci";
+  $("step1").classList.add("dual");
+  $("h1a").textContent="Önce sen nasılsın?";$("suba").textContent="Ruh halini seç, arkadaşına bir bağlantı gönderelim. O da seçince ikinize de uyan filmler çıksın.";
+  $("go").textContent="Arkadaşıma gönder";$("bvaz").classList.remove("hide");$("bmsg").classList.add("hide");
+  window.scrollTo(0,0);
+}
+function davetliBasla(a){
+  secimSifirla();S.mode="davetli";S.davet=a;
+  var m=moodOf(a);
+  $("step1").classList.add("dual");
+  $("h1a").textContent="Arkadaşın seninle film seçmek istiyor.";
+  $("suba").textContent="O, \""+m.ad+"\" havasında. Sen nasılsın?";
+  $("go").textContent="İkimize uygun filmleri getir";$("bvaz").classList.remove("hide");$("bmsg").classList.add("hide");
+}
+$("birlikte").onclick=davetciBasla;
+$("bvaz").onclick=modSifirla;
+$("kararsiz").onclick=function(){
+  var m=pick(MOODS);S.mode="tek";S.mood2=null;S.mood=m.id;S.sure="fark";S.kim="tek";goster();
+};
+$("paylas").onclick=function(){
+  var ad=S.cur.map(function(f,i){return (i+1)+". "+(f.title||f.t)}).join("\n");
+  var metin="Birlikte izleyelim. İkimize uyan filmler:\n"+ad+"\nFilmoda: "+location.origin+location.pathname;
+  if(navigator.share)navigator.share({text:metin}).catch(function(){});
+  else try{navigator.clipboard.writeText(metin);$("paylas").textContent="Kopyalandı"}catch(e){}
+};
+(function(){
+  try{
+    var b=new URLSearchParams(location.search).get("b");
+    if(b&&moodOf(b)){davetliBasla(b);history.replaceState(null,"",location.pathname)}
+  }catch(e){}
+})();
 
 buildChoices();
 setTimeout(platYenile,3000);
