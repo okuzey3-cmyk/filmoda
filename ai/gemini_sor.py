@@ -11,7 +11,7 @@ def call(model, text):
         f"{BASE}/models/{model}:generateContent",
         data=json.dumps(body).encode(),
         headers={"Content-Type": "application/json", "x-goog-api-key": KEY})
-    with urllib.request.urlopen(req, timeout=180) as r:
+    with urllib.request.urlopen(req, timeout=120) as r:
         d = json.load(r)
     return "".join(p.get("text", "") for p in d["candidates"][0]["content"]["parts"])
 
@@ -54,8 +54,11 @@ def main():
         except urllib.error.HTTPError as e:
             deneme.append(f"{m}: HTTP {e.code}")
             sonhata = e.read().decode()[:300]
-            if e.code not in (400, 404, 429, 503):
+            if e.code not in (400, 404, 429, 500, 503, 504):
                 raise
+        except (TimeoutError, OSError) as e:
+            deneme.append(f"{m}: zaman asimi/baglanti ({type(e).__name__})")
+            sonhata = str(e)[:300]
     if not kullanilan:
         open("ai/hata.md", "w", encoding="utf-8").write("Hicbir model calismadi\n" + "\n".join(deneme) + "\n" + sonhata.replace(KEY, "***"))
         return
