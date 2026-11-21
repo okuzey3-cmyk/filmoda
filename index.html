@@ -305,7 +305,7 @@ var NEDEN={
 
 var S={mood:null,mood2:null,mode:null,davet:null,sure:null,kim:null,seen:[],cur:[]};
 var store={izlenecek:[],izlendi:[]};
-try{var raw=localStorage.getItem("filmoda2");if(raw){var p=JSON.parse(raw);if(p&&p.izlenecek&&p.izlendi)store=p}}catch(e){}
+try{var raw=localStorage.getItem("filmoda2");if(raw){var p=JSON.parse(raw);if(p&&Array.isArray(p.izlenecek)&&Array.isArray(p.izlendi)){var gecerli=function(x){return x&&typeof x==="object"&&x.id};store={izlenecek:p.izlenecek.filter(gecerli),izlendi:p.izlendi.filter(gecerli)}}}}catch(e){}
 function save(){try{localStorage.setItem("filmoda2",JSON.stringify(store))}catch(e){}}
 /* TMDB verisi en fazla ~3 ay saklanir: eski kayitlar yeniden cekilir (TMDB sartlari: 6 ay siniri) */
 function tazele(){
@@ -486,12 +486,15 @@ function havuz(){
   var yasak=kim==="aile"?"27,10770,80,10752":"27,10770";
   var base={include_adult:"false",without_genres:yasak,with_genres:gen};
   if(max)base["with_runtime.lte"]=String(max);
+  var deneme=0,hata=0;
   function getir(extra,win){
+    deneme++;
     var p={};Object.keys(base).forEach(function(k){p[k]=base[k]});Object.keys(extra).forEach(function(k){p[k]=extra[k]});
     p.page=String(1+rndInt(win));
-    return tmdb("/discover/movie",p).then(function(d){return d.results||[]}).catch(function(){return []}).then(function(r){
-      if(r.length||p.page==="1")return r;
-      p.page="1";return tmdb("/discover/movie",p).then(function(d){return d.results||[]}).catch(function(){return []});
+    return tmdb("/discover/movie",p).then(function(d){return d.results||[]}).catch(function(){return null}).then(function(r){
+      if(r&&r.length)return r;
+      if(p.page==="1"){if(!r)hata++;return r||[]}
+      p.page="1";return tmdb("/discover/movie",p).then(function(d){return d.results||[]}).catch(function(){hata++;return []});
     });
   }
   var isler=[
@@ -532,6 +535,7 @@ function havuz(){
     }).catch(function(){return []}));
   });
   return Promise.all(isler).then(function(parts){
+    if(deneme>0&&hata>=deneme)throw new Error("ag");
     var map={},out=[];
     parts.forEach(function(arr){arr.forEach(function(f){
       if(map[f.id]){if(f._b&&!map[f.id]._b)map[f.id]._b=f._b;return}
