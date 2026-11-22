@@ -21,7 +21,7 @@ with sync_playwright() as p:
     pg.evaluate("document.querySelectorAll('#moods .mood')[1].click()"); pg.wait_for_timeout(300)
     pg.evaluate("document.querySelectorAll('#sure button, #sure .chip')[1].click()"); pg.wait_for_timeout(300)
     pg.evaluate("document.querySelectorAll('#kim button, #kim .chip')[1].click()"); pg.wait_for_timeout(500)
-    pg.evaluate("window.scrollTo(0,document.body.scrollHeight)"); pg.wait_for_timeout(400)
+    pg.evaluate("var e=document.getElementById('sure').previousElementSibling;window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-24)"); pg.wait_for_timeout(400)
     snap(pg, 2)                                   # ruh hali + sure + kimlesin secildi
     pg.click("#go"); pg.wait_for_selector("#rail .card", timeout=40000); pg.wait_for_timeout(600)
     snap(pg, 3)                                   # sonuc kartlari
