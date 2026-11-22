@@ -981,9 +981,11 @@ function fragman(key,link,d){
 function fragKapat(sessiz){
   var o=$("trl");if(!o)return;
   o.remove();
-  if(!sessiz&&history.state&&history.state.tr)history.back();
+  if(!sessiz&&history.state&&history.state.tr){trGeri=true;history.back()}
 }
+var trGeri=false;
 window.addEventListener("popstate",function(){
+  if(trGeri){trGeri=false;return}
   if($("trl")){$("trl").remove();return}
   if($("sheet").classList.contains("on")){$("scrim").classList.remove("on");$("sheet").classList.remove("on");renderListe()}
 });
