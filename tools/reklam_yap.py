@@ -95,6 +95,66 @@ for i in range(len(SC)):
     flt.append(f"[{i}:a]adelay={int(starts[i]*1000)}|{int(starts[i]*1000)}[a{i}]")
 mix = "".join(f"[a{i}]" for i in range(len(SC))) + f"amix=inputs={len(SC)}:normalize=0[aout]"
 subprocess.check_call(["ffmpeg","-y","-loglevel","error"]+inputs+["-filter_complex",";".join(flt)+";"+mix,"-map","[aout]",f"{TMP}/ses.m4a"])
+
+# ---- muzik + efekt (ozgun, sentezlenmis) ----
+import numpy as np, wave
+SR=44100
+def nota(m): return 440.0*2**((m-69)/12)
+def yaz(path, x):
+    x=np.clip(x,-1,1); d=(x*32767).astype(np.int16)
+    w=wave.open(path,"wb"); w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(d.tobytes()); w.close()
+def muzik_uret(toplam, sfx_t):
+    n=int(SR*(toplam+1.5)); L=np.zeros(n); R=np.zeros(n)
+    bpm=100.0; beat=60.0/bpm; t=np.arange(n)/SR
+    akor=[(57,60,64),(53,57,60),(48,52,55),(55,59,62)]   # Am F C G
+    bar=4*beat
+    for k in range(int((toplam+1.5)/bar)+2):
+        ch=akor[k%4]; a=int(k*bar*SR); b=min(n,int((k+1)*bar*SR+0.6*SR))
+        if a>=n: break
+        tt=np.arange(b-a)/SR; env=np.minimum(tt/0.6,1)*np.minimum((b-a)/SR-tt,0.9)/0.9; env=np.clip(env,0,1)
+        for m in ch:
+            f=nota(m)
+            v=(np.sin(2*np.pi*f*tt)+0.4*np.sin(2*np.pi*f*1.004*tt)+0.25*np.sin(2*np.pi*2*f*tt))*env*0.07
+            L[a:b]+=v; R[a:b]+=v*0.9
+        # bas
+        fb=nota(ch[0]-12); vb=np.sin(2*np.pi*fb*tt)*env*0.16; L[a:b]+=vb; R[a:b]+=vb
+    # arpej (8'lik)
+    e8=beat/2
+    for i in range(int((toplam+1.5)/e8)):
+        tm=i*e8
+        if tm<2.0: continue
+        ch=akor[int(tm//bar)%4]; m=[ch[0]+12,ch[1]+12,ch[2]+12,ch[1]+24][i%4]
+        a=int(tm*SR); L2=int(0.5*SR); b=min(n,a+L2)
+        if a>=n: break
+        tt=np.arange(b-a)/SR; v=np.sin(2*np.pi*nota(m)*tt)*np.exp(-tt*7)*0.07
+        pan=0.3+0.4*((i%4)/3.0); L[a:b]+=v*(1-pan); R[a:b]+=v*pan
+    # davul: 7. saniyeden sonra
+    for i in range(int((toplam+1.5)/beat)):
+        tm=i*beat
+        if tm<7.0: continue
+        a=int(tm*SR)
+        if a>=n: break
+        if i%2==0:
+            tt=np.arange(min(int(0.3*SR),n-a))/SR; f=110*np.exp(-tt*18)+45
+            v=np.sin(2*np.pi*np.cumsum(f)/SR)*np.exp(-tt*9)*0.5; L[a:a+len(tt)]+=v; R[a:a+len(tt)]+=v
+        h=a+int(beat*SR/2)
+        if h<n:
+            tt=np.arange(min(int(0.06*SR),n-h))/SR; v=(np.random.randn(len(tt)))*np.exp(-tt*70)*0.05
+            L[h:h+len(tt)]+=v; R[h:h+len(tt)]+=v
+    # gecis efekti (whoosh)
+    rng=np.random.RandomState(7)
+    for st in sfx_t:
+        a=int(max(0,st-0.35)*SR); ln=int(0.5*SR)
+        if a+ln>=n: continue
+        tt=np.arange(ln)/SR; ns=rng.randn(ln); k=np.convolve(ns,np.ones(40)/40,mode="same")
+        env=np.sin(np.pi*tt/0.5)**2; v=k*env*0.35
+        L[a:a+ln]+=v; R[a:a+ln]+=v
+    ft=int(1.5*SR); fade=np.ones(n); fade[-ft:]=np.linspace(1,0,ft); fade[:int(0.5*SR)]=np.linspace(0,1,int(0.5*SR))
+    return np.stack([L*fade,R*fade],axis=1).reshape(-1)*0.9
+yaz(TMP+"/muzik.wav", muzik_uret(total, [starts[2],starts[4],starts[6]]))
+subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",TMP+"/ses.m4a","-i",TMP+"/muzik.wav","-filter_complex",
+  "[1:a]volume=0.9[m];[0:a]asplit=2[v1][v2];[m][v1]sidechaincompress=threshold=0.02:ratio=9:attack=15:release=350:makeup=1[duck];[duck][v2]amix=inputs=2:normalize=0,loudnorm=I=-16:TP=-1.5[aout]",
+  "-map","[aout]","-ar","44100",TMP+"/ses2.m4a"])
 # altyazi (ASS)
 def ass_t(s): h=int(s//3600); m=int(s%3600//60); return f"{h}:{m:02d}:{s%60:05.2f}"
 lines = []
@@ -114,7 +174,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 """ + "\n".join(lines)
 open(f"{TMP}/a.ass","w",encoding="utf-8").write(ass)
 print('ffmpeg dikey', flush=True)
-subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",vid,"-i",f"{TMP}/ses.m4a","-filter_complex",f"color=c=0x17101A:s=1080x1920:d=120[bg];[0:v]scale=900:1600:flags=lanczos[p];[bg][p]overlay=90:40:shortest=1,ass={TMP}/a.ass,format=yuv420p[v]","-map","[v]","-map","1:a",
+subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",vid,"-i",f"{TMP}/ses2.m4a","-filter_complex",f"color=c=0x17101A:s=1080x1920:d=120[bg];[0:v]scale=w='900*(1+0.05*t/36)':h='1600*(1+0.05*t/36)':eval=frame:flags=bilinear[p];[bg][p]overlay=x='(W-w)/2':y='40':shortest=1,ass={TMP}/a.ass,format=yuv420p[v]","-map","[v]","-map","1:a",
   "-c:v","libx264","-crf","20","-preset","veryfast","-r","30","-c:a","aac","-b:a","160k","-shortest","-movflags","+faststart",f"{OUT}/filmoda-reklam-dikey.mp4"])
 print('yatay', flush=True)
 # yatay 16:9: telefon ortada, koyu zemin
