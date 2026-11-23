@@ -87,7 +87,7 @@ open(TMP+"/frames.txt","w").write("\n".join(lst))
 subprocess.check_call(["ffmpeg","-y","-loglevel","error","-f","concat","-safe","0","-i",TMP+"/frames.txt","-vf","fps=30,scale=1080:1920:flags=lanczos,format=yuv420p","-c:v","libx264","-crf","17","-preset","veryfast",TMP+"/ham.mp4"])
 vid = TMP+"/ham.mp4"
 
-subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",SES,"-af",f"apad=whole_dur={total:.3f}","-ar","44100","-ac","2",f"{TMP}/ses.m4a"])
+subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",SES,"-af",f"adelay={int(starts[0]*1000)}|{int(starts[0]*1000)},apad=whole_dur={total:.3f}","-ar","44100","-ac","2",f"{TMP}/ses.m4a"])
 # ---- muzik + efekt (ozgun, sentezlenmis) ----
 import numpy as np, wave
 SR=44100
@@ -151,8 +151,8 @@ subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",TMP+"/ses.m4a","-i
 def ass_t(s): h=int(s//3600); m=int(s%3600//60); return f"{h}:{m:02d}:{s%60:05.2f}"
 lines = []
 for i, t in enumerate(SC):
-    e = starts[i]+D[i]-0.05 if i<len(SC)-1 else starts[i]+D[i]-0.4
-    lines.append(f"Dialogue: 0,{ass_t(starts[i]+0.02)},{ass_t(e)},D,,0,0,0,,{t}")
+    b0 = SB[i]+starts[0]; e = (SB[i+1]+starts[0]-0.05) if i<len(SC)-1 else b0+D[i]-0.4
+    lines.append(f"Dialogue: 0,{ass_t(b0+0.02)},{ass_t(e)},D,,0,0,0,,{t}")
 ass = """[Script Info]
 ScriptType: v4.00+
 PlayResX: 1080
