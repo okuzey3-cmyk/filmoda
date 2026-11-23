@@ -1,0 +1,22 @@
+name: transkript
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install faster-whisper
+      - run: python3 tools/transkript.py
+      - run: |
+          git config user.name "reklam-bot"
+          git config user.email "reklam-bot@users.noreply.github.com"
+          git add ai/reklam
+          git commit -m "Ses kelime zamanlari
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016gSRef9pBABgfCFpVkZriG" || true
+          git pull --rebase
+          git push
