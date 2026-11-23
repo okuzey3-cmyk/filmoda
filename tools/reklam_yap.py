@@ -64,7 +64,7 @@ async def run():
         await bekle(t,3)
         ca = time.time()-T0; await pg.click("#go")
         t = basla(4); await pg.wait_for_selector("#rail .card", timeout=40000)
-        await pg.wait_for_function("[...document.images].every(i=>i.complete)", timeout=30000); await pg.wait_for_timeout(500)
+        await pg.wait_for_function("(()=>{const a=[...document.querySelectorAll('#rail .card img')];return a.length>=2&&a.every(i=>i.complete&&i.naturalWidth>0)})()", timeout=40000); await pg.wait_for_timeout(900)
         cb = time.time()-T0; CUT.append((ca+0.15, cb)); t = time.time(); await pg.wait_for_timeout(2200)
         await ev("document.querySelectorAll('#rail .card')[0].click()"); await pg.wait_for_selector("#ad", timeout=40000)
         await bekle(t,4)
