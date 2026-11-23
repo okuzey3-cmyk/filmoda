@@ -1,5 +1,5 @@
 # Filmoda 30 sn tanitim reklami: gercek uygulama + Turkce erkek sesi + altyazi. Tek seferlik.
-import asyncio, base64, functools, http.server, json, os, socketserver, subprocess, threading, time, glob
+import sys, asyncio, base64, functools, http.server, json, os, socketserver, subprocess, threading, time, glob
 import edge_tts
 from playwright.sync_api import sync_playwright
 OUT = "ai/reklam"; TMP = "/tmp/rk"; os.makedirs(OUT, exist_ok=True); os.makedirs(TMP, exist_ok=True)
@@ -20,7 +20,7 @@ async def tts():
         await edge_tts.Communicate(t, VOICE, rate="-4%").save(f"{TMP}/s{i}.mp3")
 asyncio.run(tts())
 D = [sure(f"{TMP}/s{i}.mp3") + 0.45 for i in range(len(SC))]
-print("sureler", D)
+print("sureler", D, flush=True)
 class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
 srv = socketserver.TCPServer(("127.0.0.1", 8198), functools.partial(Q, directory="."))
@@ -45,27 +45,28 @@ with sync_playwright() as p:
         if k > 0: pg.wait_for_timeout(int(k*1000))
     pg.goto("http://127.0.0.1:8198/index.html"); pg.wait_for_selector("#moods .mood", timeout=30000); pg.wait_for_timeout(500)
     # 0
-    t = basla(0); pg.evaluate("window.scrollTo({top:260,behavior:'smooth'})"); pg.wait_for_timeout(1800)
+    print('sahne0', flush=True); t = basla(0); pg.evaluate("window.scrollTo({top:260,behavior:'smooth'})"); pg.wait_for_timeout(1800)
     pg.evaluate("window.scrollTo({top:0,behavior:'smooth'})"); bekle(t,0)
     # 1
-    t = basla(1); bekle(t,1)
+    print('sahne1', flush=True); t = basla(1); bekle(t,1)
     # 2
-    t = basla(2); pg.wait_for_timeout(900); pg.evaluate("document.querySelectorAll('#moods .mood')[1].click()"); bekle(t,2)
+    print('sahne2', flush=True); t = basla(2); pg.wait_for_timeout(900); pg.evaluate("document.querySelectorAll('#moods .mood')[1].click()"); bekle(t,2)
     # 3
-    t = basla(3); pg.evaluate("document.querySelectorAll('#sure .chip, #sure button')[1].click()"); pg.wait_for_timeout(1100)
+    print('sahne3', flush=True); t = basla(3); pg.evaluate("document.querySelectorAll('#sure .chip, #sure button')[1].click()"); pg.wait_for_timeout(1100)
     pg.evaluate("document.querySelectorAll('#kim .chip, #kim button')[1].click()"); pg.wait_for_timeout(500)
     pg.evaluate("window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})"); bekle(t,3)
     # 4
-    t = basla(4); pg.click("#go"); pg.wait_for_selector("#rail .card", timeout=40000)
+    print('sahne4', flush=True); t = basla(4); pg.click("#go"); pg.wait_for_selector("#rail .card", timeout=40000)
     pg.wait_for_function("[...document.images].every(i=>i.complete)", timeout=30000); pg.wait_for_timeout(1800)
     pg.evaluate("document.querySelectorAll('#rail .card')[0].click()"); pg.wait_for_selector("#ad", timeout=40000)
     bekle(t,4)
     # 5
-    t = basla(5); pg.evaluate("document.getElementById('sheet').scrollTo({top:300,behavior:'smooth'})"); bekle(t,5)
+    print('sahne5', flush=True); t = basla(5); pg.evaluate("document.getElementById('sheet').scrollTo({top:300,behavior:'smooth'})"); bekle(t,5)
     # 6
-    t = basla(6); pg.set_content(SON); bekle(t,6)
+    print('sahne6', flush=True); t = basla(6); pg.set_content(SON); bekle(t,6)
     total = time.time()-T0; pg.wait_for_timeout(300)
     c.close(); b.close()
+print('kayit bitti', flush=True)
 vid = glob.glob(TMP+"/vid/*.webm")[0]
 # ses: her sahne kendi baslangicinda
 inputs = []; flt = []
@@ -92,8 +93,10 @@ Style: D,DejaVu Sans,54,&H00FFFFFF,&HCC000000,&H00000000,1,5,0,2,90,90,330
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 """ + "\n".join(lines)
 open(f"{TMP}/a.ass","w",encoding="utf-8").write(ass)
+print('ffmpeg dikey', flush=True)
 subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",vid,"-i",f"{TMP}/ses.m4a","-vf",f"scale=1080:1920:flags=lanczos,ass={TMP}/a.ass,format=yuv420p",
   "-c:v","libx264","-crf","20","-preset","veryfast","-r","30","-c:a","aac","-b:a","160k","-shortest","-movflags","+faststart",f"{OUT}/filmoda-reklam-dikey.mp4"])
+print('yatay', flush=True)
 # yatay 16:9: telefon ortada, koyu zemin
 subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",f"{OUT}/filmoda-reklam-dikey.mp4","-filter_complex",
   "color=c=0x17101A:s=1920x1080[bg];[0:v]scale=-2:1080[v];[bg][v]overlay=(W-w)/2:0,format=yuv420p","-c:v","libx264","-crf","20","-preset","veryfast","-c:a","copy","-movflags","+faststart",f"{OUT}/filmoda-reklam-yatay.mp4"])
