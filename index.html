@@ -49,6 +49,9 @@ h1{font-size:34px;line-height:1.1;margin-bottom:6px}
 .mini{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 8px;border-radius:14px;background:transparent;border:1.5px solid var(--line);color:var(--muted);font-size:14px;font-weight:600;line-height:1.1;transition:border-color .15s,color .15s}
 .mini svg{flex:none;color:var(--accent)}
 .mini:active{border-color:var(--accent);color:var(--text)}
+.bay{display:flex;align-items:center;justify-content:center;gap:10px;margin:-6px 0 16px;padding:9px 8px 9px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);font-size:13.5px;line-height:1.4;color:var(--text);text-align:center}
+.bay i{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
+.bay button{flex:none;color:var(--muted);font-size:14px;padding:4px 8px;line-height:1}
 .plb{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;border:1.5px solid var(--line);color:var(--muted);font-family:var(--body);font-weight:600;font-size:13px;line-height:1;transition:border-color .15s,color .15s,background .15s}
 .plb svg{flex:none;color:var(--accent)}
 .plb.on{border-color:var(--accent);color:var(--text);background:color-mix(in srgb,var(--accent) 12%,transparent)}
@@ -221,6 +224,7 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
 <main id="main">
 
 <section id="v-oner">
+  <div class="bay hide" id="bay" role="note"><i></i><span id="bayt"></span><button id="bayk" aria-label="Kapat">✕</button></div>
   <div class="brand"><i></i>Filmoda<button class="plb" id="plb" aria-label="Hangi platformlarda izleyebiliyorsan onları seç"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2.5"/><path d="M8.5 21h7M12 17v4"/></svg><span id="plt">Platformlarım</span></button><button class="vaz hide" id="bvaz">Vazgeç</button></div>
 
   <div id="step1">
@@ -1016,6 +1020,30 @@ window.addEventListener("popstate",function(){
   if($("sheet").classList.contains("on")){$("scrim").classList.remove("on");$("sheet").classList.remove("on");renderListe();pfSonra()}
 });
 $("scrim").onclick=kapat;
+/* ===== OZEL GUNLER: o gun sayfanin ustunde tek satir ===== */
+var DINI={2026:{r:[[3,20,3]],k:[[5,27,4]]},2027:{r:[[3,9,3]],k:[[5,16,4]]}};
+var KAN={"2026-1-15":"Miraç","2026-2-2":"Berat","2026-3-16":"Kadir Gecesi","2026-8-24":"Mevlid","2026-12-10":"Regaip","2027-1-4":"Miraç","2027-1-22":"Berat","2027-3-5":"Kadir Gecesi","2027-8-13":"Mevlid","2027-12-2":"Regaip","2027-12-24":"Miraç"};
+function nciPazar(y,ay,n){var d=new Date(y,ay,1),k=(7-d.getDay())%7;return 1+k+(n-1)*7}
+function bugunOzel(d){
+  var y=d.getFullYear(),m=d.getMonth()+1,g=d.getDate();
+  function ara(l){return (l||[]).some(function(a){var b=new Date(y,a[0]-1,a[1]),e=new Date(y,a[0]-1,a[1]+a[2]-1);var t=new Date(y,m-1,g);return t>=b&&t<=e})}
+  var di=DINI[y]||{};
+  if(ara(di.r))return "Ramazan Bayramınız mübarek olsun.";
+  if(ara(di.k))return "Kurban Bayramınız mübarek olsun.";
+  var kn=KAN[y+"-"+m+"-"+g];
+  if(kn)return kn==="Kadir Gecesi"?"Kadir Geceniz mübarek olsun.":kn+" Kandiliniz mübarek olsun.";
+  var T={"1-1":"Yeni yılınız kutlu olsun.","4-23":"23 Nisan Ulusal Egemenlik ve Çocuk Bayramı kutlu olsun.","5-1":"1 Mayıs Emek ve Dayanışma Günü kutlu olsun.","5-19":"19 Mayıs Atatürk'ü Anma, Gençlik ve Spor Bayramı kutlu olsun.","7-15":"15 Temmuz Demokrasi ve Milli Birlik Günü. Şehitlerimizi saygıyla anıyoruz.","8-30":"30 Ağustos Zafer Bayramı kutlu olsun.","10-29":"Cumhuriyetimizin "+(y-1923)+". yılı kutlu olsun.","11-10":"Atatürk'ü saygı ve özlemle anıyoruz.","11-24":"Öğretmenler Günü kutlu olsun."};
+  if(T[m+"-"+g])return T[m+"-"+g];
+  if(m===5&&g===nciPazar(y,4,2))return "Anneler Günü kutlu olsun.";
+  if(m===6&&g===nciPazar(y,5,3))return "Babalar Günü kutlu olsun.";
+  return "";
+}
+(function(){
+  var n=new Date(),key=n.getFullYear()+"-"+(n.getMonth()+1)+"-"+n.getDate(),t=bugunOzel(n),kapali="";
+  try{kapali=localStorage.getItem("filmoda_bayram")||""}catch(e){}
+  if(t&&kapali!==key){$("bayt").textContent=t;$("bay").classList.remove("hide")}
+  $("bayk").onclick=function(){$("bay").classList.add("hide");try{localStorage.setItem("filmoda_bayram",key)}catch(e){}};
+})();
 /* ===== PLATFORMLARIM ===== */
 var pfDeg=false;
 function pfEtiket(){
