@@ -1,15 +1,15 @@
 # Filmoda 30 sn tanitim reklami: gercek uygulama + Turkce erkek sesi + altyazi. Tek seferlik.
 import sys, asyncio, base64, functools, http.server, json, os, socketserver, subprocess, threading, time, glob
 import edge_tts
-from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
 OUT = "ai/reklam"; TMP = "/tmp/rk"; os.makedirs(OUT, exist_ok=True); os.makedirs(TMP, exist_ok=True)
 VOICE = "tr-TR-AhmetNeural"
 SC = [
- "Yemek bitti, kanepeye oturdun. Sen seç. Yok, sen seç. Yarım saat geçti, hâlâ film yok.",
+ "Yemek bitti. Sen seç. Yok, sen seç. Yarım saat geçti, hâlâ film yok.",
  "Tanıdık geldi mi?",
- "Filmoda'da sadece nasıl hissettiğini seç. Dinlenmek mi istiyorsun, gülmek mi, heyecan mı?",
- "Ne kadar vaktin var, kiminle izleyeceksin, onu da söyle.",
- "Sana tam üç film gelsin. Fragmanı, nerede izleneceği, hepsi tek ekranda.",
+ "Filmoda'da sadece nasıl hissettiğini seç. Dinlenmek mi, gülmek mi, heyecan mı?",
+ "Vaktini ve kiminle izleyeceğini söyle.",
+ "Sana üç film gelsin. Fragmanı ve nerede izleneceği, hepsi tek ekranda.",
  "Üç film, tek karar.",
  "Filmoda. Ücretsiz, reklamsız, üyeliksiz. Google Play'de.",
 ]
@@ -17,9 +17,9 @@ def sure(f):
     return float(subprocess.check_output(["ffprobe","-v","error","-show_entries","format=duration","-of","csv=p=0",f]).decode())
 async def tts():
     for i, t in enumerate(SC):
-        await edge_tts.Communicate(t, VOICE, rate="-4%").save(f"{TMP}/s{i}.mp3")
+        await edge_tts.Communicate(t, VOICE, rate="+10%").save(f"{TMP}/s{i}.mp3")
 asyncio.run(tts())
-D = [sure(f"{TMP}/s{i}.mp3") + 0.45 for i in range(len(SC))]
+D = [sure(f"{TMP}/s{i}.mp3") + 0.30 for i in range(len(SC))]
 print("sureler", D, flush=True)
 class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
@@ -31,43 +31,61 @@ SON = f"""<body style="margin:0;background:#17101A;color:#fff;font-family:Georgi
 <div style="font-size:44px;margin-top:22px;font-weight:700">Filmoda</div>
 <div style="font-size:16px;color:#E8899D;margin-top:8px;font-family:Arial,sans-serif">Bu akşam ne izlesem?</div>
 <div style="margin-top:34px;padding:12px 22px;border:1px solid #5a4a62;border-radius:14px;font-family:Arial,sans-serif;font-size:15px">Google Play'de ücretsiz</div></body>"""
-starts = []
-with sync_playwright() as p:
-    b = p.chromium.launch()
-    c = b.new_context(viewport={"width":360,"height":640}, device_scale_factor=3, is_mobile=True, has_touch=True, locale="tr-TR",
-                      record_video_dir=TMP+"/vid", record_video_size={"width":1080,"height":1920})
-    pg = c.new_page(); T0 = time.time()
-    pg.add_init_script("localStorage.setItem('filmoda_intro','1');")
-    def basla(i):
-        starts.append(time.time()-T0); return time.time()
-    def bekle(t0, i):
-        k = D[i]-(time.time()-t0)
-        if k > 0: pg.wait_for_timeout(int(k*1000))
-    pg.goto("http://127.0.0.1:8198/index.html"); pg.wait_for_selector("#moods .mood", timeout=30000); pg.wait_for_timeout(500)
-    # 0
-    print('sahne0', flush=True); t = basla(0); pg.evaluate("window.scrollTo({top:260,behavior:'smooth'})"); pg.wait_for_timeout(1800)
-    pg.evaluate("window.scrollTo({top:0,behavior:'smooth'})"); bekle(t,0)
-    # 1
-    print('sahne1', flush=True); t = basla(1); bekle(t,1)
-    # 2
-    print('sahne2', flush=True); t = basla(2); pg.wait_for_timeout(900); pg.evaluate("document.querySelectorAll('#moods .mood')[1].click()"); bekle(t,2)
-    # 3
-    print('sahne3', flush=True); t = basla(3); pg.evaluate("document.querySelectorAll('#sure .chip, #sure button')[1].click()"); pg.wait_for_timeout(1100)
-    pg.evaluate("document.querySelectorAll('#kim .chip, #kim button')[1].click()"); pg.wait_for_timeout(500)
-    pg.evaluate("window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})"); bekle(t,3)
-    # 4
-    print('sahne4', flush=True); t = basla(4); pg.click("#go"); pg.wait_for_selector("#rail .card", timeout=40000)
-    pg.wait_for_function("[...document.images].every(i=>i.complete)", timeout=30000); pg.wait_for_timeout(1800)
-    pg.evaluate("document.querySelectorAll('#rail .card')[0].click()"); pg.wait_for_selector("#ad", timeout=40000)
-    bekle(t,4)
-    # 5
-    print('sahne5', flush=True); t = basla(5); pg.evaluate("document.getElementById('sheet').scrollTo({top:300,behavior:'smooth'})"); bekle(t,5)
-    # 6
-    print('sahne6', flush=True); t = basla(6); pg.set_content(SON); bekle(t,6)
-    total = time.time()-T0; pg.wait_for_timeout(300)
-    c.close(); b.close()
-print('kayit bitti', flush=True)
-vid = glob.glob(TMP+"/vid/*.webm")[0]
+
+starts = []; frames = []
+async def run():
+    async with async_playwright() as p:
+        b = await p.chromium.launch()
+        c = await b.new_context(viewport={"width":360,"height":640}, device_scale_factor=3, is_mobile=True, has_touch=True, locale="tr-TR")
+        pg = await c.new_page()
+        await pg.add_init_script("localStorage.setItem('filmoda_intro','1');")
+        cdp = await c.new_cdp_session(pg)
+        T0 = time.time()
+        async def on_frame(e):
+            frames.append((time.time()-T0, base64.b64decode(e["data"])))
+            try: await cdp.send("Page.screencastFrameAck", {"sessionId": e["sessionId"]})
+            except Exception: pass
+        cdp.on("Page.screencastFrame", lambda e: asyncio.ensure_future(on_frame(e)))
+        await pg.goto("http://127.0.0.1:8198/index.html"); await pg.wait_for_selector("#moods .mood", timeout=30000)
+        await cdp.send("Page.startScreencast", {"format":"jpeg","quality":92,"maxWidth":1080,"maxHeight":1920,"everyNthFrame":1})
+        await pg.wait_for_timeout(500)
+        def basla(i):
+            print("sahne", i, flush=True); starts.append(time.time()-T0); return time.time()
+        async def bekle(t0, i):
+            k = D[i]-(time.time()-t0)
+            if k > 0: await pg.wait_for_timeout(int(k*1000))
+        async def ev(js): await pg.evaluate(js)
+        t = basla(0); await ev("window.scrollTo({top:260,behavior:'smooth'})"); await pg.wait_for_timeout(1500)
+        await ev("window.scrollTo({top:0,behavior:'smooth'})"); await bekle(t,0)
+        t = basla(1); await bekle(t,1)
+        t = basla(2); await pg.wait_for_timeout(700); await ev("document.querySelectorAll('#moods .mood')[1].click()"); await bekle(t,2)
+        t = basla(3); await ev("document.querySelectorAll('#sure .chip, #sure button')[1].click()"); await pg.wait_for_timeout(700)
+        await ev("document.querySelectorAll('#kim .chip, #kim button')[1].click()"); await pg.wait_for_timeout(300)
+        await ev("window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})"); await bekle(t,3)
+        t = basla(4); await pg.click("#go"); await pg.wait_for_selector("#rail .card", timeout=40000)
+        await pg.wait_for_function("[...document.images].every(i=>i.complete)", timeout=30000); await pg.wait_for_timeout(1500)
+        await ev("document.querySelectorAll('#rail .card')[0].click()"); await pg.wait_for_selector("#ad", timeout=40000)
+        await bekle(t,4)
+        t = basla(5); await ev("document.getElementById('sheet').scrollTo({top:300,behavior:'smooth'})"); await bekle(t,5)
+        t = basla(6); await pg.set_content(SON); await bekle(t,6)
+        await pg.wait_for_timeout(400); total = time.time()-T0
+        await cdp.send("Page.stopScreencast"); await c.close(); await b.close()
+        return total
+total = asyncio.run(run())
+print("kayit bitti", len(frames), flush=True)
+# kareler -> degisken kare hizli video (concat)
+os.makedirs(TMP+"/fr", exist_ok=True)
+lst = []
+for k,(ts,jpg) in enumerate(frames):
+    open(f"{TMP}/fr/{k:05d}.jpg","wb").write(jpg)
+for k,(ts,jpg) in enumerate(frames):
+    nxt = frames[k+1][0] if k+1 < len(frames) else total
+    lst.append(f"file '{TMP}/fr/{k:05d}.jpg'\nduration {max(nxt-ts,0.01):.4f}")
+lst.append(f"file '{TMP}/fr/{len(frames)-1:05d}.jpg'")
+open(TMP+"/frames.txt","w").write("\n".join(lst))
+subprocess.check_call(["ffmpeg","-y","-loglevel","error","-f","concat","-safe","0","-i",TMP+"/frames.txt","-vf","fps=30,scale=1080:1920:flags=lanczos,format=yuv420p","-c:v","libx264","-crf","17","-preset","veryfast",TMP+"/ham.mp4"])
+vid = TMP+"/ham.mp4"
+
 # ses: her sahne kendi baslangicinda
 inputs = []; flt = []
 for i in range(len(SC)):
