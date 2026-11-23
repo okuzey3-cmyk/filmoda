@@ -1,6 +1,6 @@
 # Filmoda 30 sn tanitim reklami: gercek uygulama + Turkce erkek sesi + altyazi. Tek seferlik.
 import sys, asyncio, base64, functools, http.server, json, os, socketserver, subprocess, threading, time, glob
-import edge_tts
+
 from playwright.async_api import async_playwright
 OUT = "ai/reklam"; TMP = "/tmp/rk"; os.makedirs(OUT, exist_ok=True); os.makedirs(TMP, exist_ok=True)
 VOICE = "tr-TR-AhmetNeural"
@@ -15,11 +15,10 @@ SC = [
 ]
 def sure(f):
     return float(subprocess.check_output(["ffprobe","-v","error","-show_entries","format=duration","-of","csv=p=0",f]).decode())
-async def tts():
-    for i, t in enumerate(SC):
-        await edge_tts.Communicate(t, VOICE, rate="+20%").save(f"{TMP}/s{i}.mp3")
-asyncio.run(tts())
-D = [sure(f"{TMP}/s{i}.mp3") + 0.18 for i in range(len(SC))]
+SES="ai/reklam/ses.mp3"
+ZAMAN=json.load(open("ai/reklam/zaman.json"))   # sahne baslangiclari (sn) + kuyruk
+SB=ZAMAN["sahne"]; SES_SURE=sure(SES); KUYRUK=ZAMAN.get("kuyruk",1.0)
+D=[(SB[i+1] if i+1<len(SB) else SES_SURE+KUYRUK)-SB[i] for i in range(len(SC))]
 print("sureler", D, flush=True)
 class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
@@ -88,14 +87,7 @@ open(TMP+"/frames.txt","w").write("\n".join(lst))
 subprocess.check_call(["ffmpeg","-y","-loglevel","error","-f","concat","-safe","0","-i",TMP+"/frames.txt","-vf","fps=30,scale=1080:1920:flags=lanczos,format=yuv420p","-c:v","libx264","-crf","17","-preset","veryfast",TMP+"/ham.mp4"])
 vid = TMP+"/ham.mp4"
 
-# ses: her sahne kendi baslangicinda
-inputs = []; flt = []
-for i in range(len(SC)):
-    inputs += ["-i", f"{TMP}/s{i}.mp3"]
-    flt.append(f"[{i}:a]adelay={int(starts[i]*1000)}|{int(starts[i]*1000)}[a{i}]")
-mix = "".join(f"[a{i}]" for i in range(len(SC))) + f"amix=inputs={len(SC)}:normalize=0[aout]"
-subprocess.check_call(["ffmpeg","-y","-loglevel","error"]+inputs+["-filter_complex",";".join(flt)+";"+mix,"-map","[aout]",f"{TMP}/ses.m4a"])
-
+subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",SES,"-af",f"apad=whole_dur={total:.3f}","-ar","44100","-ac","2",f"{TMP}/ses.m4a"])
 # ---- muzik + efekt (ozgun, sentezlenmis) ----
 import numpy as np, wave
 SR=44100
@@ -159,8 +151,8 @@ subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",TMP+"/ses.m4a","-i
 def ass_t(s): h=int(s//3600); m=int(s%3600//60); return f"{h}:{m:02d}:{s%60:05.2f}"
 lines = []
 for i, t in enumerate(SC):
-    e = starts[i]+D[i]-0.1
-    lines.append(f"Dialogue: 0,{ass_t(starts[i]+0.05)},{ass_t(e)},D,,0,0,0,,{t}")
+    e = starts[i]+D[i]-0.05 if i<len(SC)-1 else starts[i]+D[i]-0.4
+    lines.append(f"Dialogue: 0,{ass_t(starts[i]+0.02)},{ass_t(e)},D,,0,0,0,,{t}")
 ass = """[Script Info]
 ScriptType: v4.00+
 PlayResX: 1080
@@ -174,7 +166,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 """ + "\n".join(lines)
 open(f"{TMP}/a.ass","w",encoding="utf-8").write(ass)
 print('ffmpeg dikey', flush=True)
-subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",vid,"-i",f"{TMP}/ses2.m4a","-filter_complex",f"color=c=0x17101A:s=1080x1920:d=120[bg];[0:v]scale=w='900*(1+0.05*t/36)':h='1600*(1+0.05*t/36)':eval=frame:flags=bilinear[p];[bg][p]overlay=x='(W-w)/2':y='40':shortest=1,ass={TMP}/a.ass,format=yuv420p[v]","-map","[v]","-map","1:a",
+subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",vid,"-i",f"{TMP}/ses2.m4a","-filter_complex",f"color=c=0x17101A:s=1080x1920:d=120[bg];[0:v]scale=w='900*(1+0.05*t/{total:.1f})':h='1600*(1+0.05*t/{total:.1f})':eval=frame:flags=bilinear[p];[bg][p]overlay=x='(W-w)/2':y='40':shortest=1,ass={TMP}/a.ass,format=yuv420p[v]","-map","[v]","-map","1:a",
   "-c:v","libx264","-crf","20","-preset","veryfast","-r","30","-c:a","aac","-b:a","160k","-shortest","-movflags","+faststart",f"{OUT}/filmoda-reklam-dikey.mp4"])
 print('yatay', flush=True)
 # yatay 16:9: telefon ortada, koyu zemin
