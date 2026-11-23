@@ -173,7 +173,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 """ + "\n".join(lines)
 open(f"{TMP}/a.ass","w",encoding="utf-8").write(ass)
 print('ffmpeg dikey', flush=True)
-subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",vid,"-i",f"{TMP}/ses2.m4a","-filter_complex",f"color=c=0x17101A:s=1080x1920:d=120[bg];[0:v]scale=w='900*(1+0.05*t/{total:.1f})':h='1600*(1+0.05*t/{total:.1f})':eval=frame:flags=bilinear[p];[bg][p]overlay=x='(W-w)/2':y='40':shortest=1,ass={TMP}/a.ass,format=yuv420p[v]","-map","[v]","-map","1:a",
+subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",vid,"-i",f"{TMP}/ses2.m4a","-filter_complex",f"color=c=0x17101A:s=1080x1920:d=120[bg];[0:v]scale=w='880*(1+0.03*t/{total:.1f})':h='1560*(1+0.03*t/{total:.1f})':eval=frame:flags=bilinear[p];[bg][p]overlay=x='(W-w)/2':y='24':shortest=1,ass={TMP}/a.ass,format=yuv420p[v]","-map","[v]","-map","1:a",
   "-c:v","libx264","-crf","20","-preset","veryfast","-r","30","-c:a","aac","-b:a","160k","-shortest","-movflags","+faststart",f"{OUT}/filmoda-reklam-dikey.mp4"])
 print('yatay', flush=True)
 # yatay 16:9: telefon ortada, koyu zemin
