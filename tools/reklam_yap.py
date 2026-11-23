@@ -17,9 +17,9 @@ def sure(f):
     return float(subprocess.check_output(["ffprobe","-v","error","-show_entries","format=duration","-of","csv=p=0",f]).decode())
 async def tts():
     for i, t in enumerate(SC):
-        await edge_tts.Communicate(t, VOICE, rate="+10%").save(f"{TMP}/s{i}.mp3")
+        await edge_tts.Communicate(t, VOICE, rate="+20%").save(f"{TMP}/s{i}.mp3")
 asyncio.run(tts())
-D = [sure(f"{TMP}/s{i}.mp3") + 0.30 for i in range(len(SC))]
+D = [sure(f"{TMP}/s{i}.mp3") + 0.18 for i in range(len(SC))]
 print("sureler", D, flush=True)
 class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
