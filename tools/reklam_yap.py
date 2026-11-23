@@ -31,7 +31,7 @@ SON = f"""<body style="margin:0;background:#17101A;color:#fff;font-family:Georgi
 <div style="font-size:16px;color:#E8899D;margin-top:8px;font-family:Arial,sans-serif">Bu akşam ne izlesem?</div>
 <div style="margin-top:34px;padding:12px 22px;border:1px solid #5a4a62;border-radius:14px;font-family:Arial,sans-serif;font-size:15px">Google Play'de ücretsiz</div></body>"""
 
-starts = []; frames = []
+starts = []; frames = []; CUT = []
 async def run():
     async with async_playwright() as p:
         b = await p.chromium.launch()
@@ -61,9 +61,11 @@ async def run():
         t = basla(3); await ev("document.querySelectorAll('#sure .chip, #sure button')[1].click()"); await pg.wait_for_timeout(450)
         await ev("document.querySelectorAll('#kim .chip, #kim button')[1].click()"); await pg.wait_for_timeout(150)
         await ev("window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})"); await pg.wait_for_timeout(600)
-        await pg.click("#go"); await bekle(t,3)
+        await bekle(t,3)
+        ca = time.time()-T0; await pg.click("#go")
         t = basla(4); await pg.wait_for_selector("#rail .card", timeout=40000)
-        await pg.wait_for_function("[...document.images].every(i=>i.complete)", timeout=30000); await pg.wait_for_timeout(1300)
+        await pg.wait_for_function("[...document.images].every(i=>i.complete)", timeout=30000); await pg.wait_for_timeout(500)
+        cb = time.time()-T0; CUT.append((ca+0.15, cb)); t = time.time(); await pg.wait_for_timeout(2200)
         await ev("document.querySelectorAll('#rail .card')[0].click()"); await pg.wait_for_selector("#ad", timeout=40000)
         await bekle(t,4)
         t = basla(5); await ev("document.getElementById('sheet').scrollTo({top:300,behavior:'smooth'})"); await bekle(t,5)
@@ -72,6 +74,11 @@ async def run():
         await cdp.send("Page.stopScreencast"); await c.close(); await b.close()
         return total
 total = asyncio.run(run())
+if CUT:
+    ca, cb = CUT[0]; L = cb-ca
+    frames[:] = [(ts if ts<=ca else ts-L, j) for ts,j in frames if not (ca<ts<cb)]
+    for i in range(5, len(starts)): starts[i] -= L
+    total -= L
 frames[0] = (0.0, frames[0][1])
 print("kayit bitti", len(frames), flush=True)
 # kareler -> degisken kare hizli video (concat)
