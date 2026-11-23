@@ -49,6 +49,16 @@ h1{font-size:34px;line-height:1.1;margin-bottom:6px}
 .mini{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 8px;border-radius:14px;background:transparent;border:1.5px solid var(--line);color:var(--muted);font-size:14px;font-weight:600;line-height:1.1;transition:border-color .15s,color .15s}
 .mini svg{flex:none;color:var(--accent)}
 .mini:active{border-color:var(--accent);color:var(--text)}
+.plb{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;border:1.5px solid var(--line);color:var(--muted);font-family:var(--body);font-weight:600;font-size:13px;line-height:1;transition:border-color .15s,color .15s,background .15s}
+.plb svg{flex:none;color:var(--accent)}
+.plb.on{border-color:var(--accent);color:var(--text);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.plb~.vaz{margin-left:10px}
+.pfs{padding-top:30px;margin-top:0}
+.pfs h2{padding-right:44px}
+.pfs .ov{margin-bottom:20px;color:var(--muted)}
+.pfc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pfc .chip{padding:15px 10px;text-align:center;font-size:16px;border-radius:16px}
+.pfn{margin-top:14px;font-size:13px;color:var(--muted);text-align:center}
 .vaz{margin-left:auto;font-family:var(--body);font-weight:600;font-size:15px;color:var(--muted);padding:6px 4px}
 #sure{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}
 #kim{display:grid;grid-template-columns:1fr 1fr}
@@ -211,7 +221,7 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
 <main id="main">
 
 <section id="v-oner">
-  <div class="brand"><i></i>Filmoda<button class="vaz hide" id="bvaz">Vazgeç</button></div>
+  <div class="brand"><i></i>Filmoda<button class="plb" id="plb" aria-label="Hangi platformlarda izleyebiliyorsan onları seç"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2.5"/><path d="M8.5 21h7M12 17v4"/></svg><span id="plt">Platformlarım</span></button><button class="vaz hide" id="bvaz">Vazgeç</button></div>
 
   <div id="step1">
     <h1 id="h1a">Bu akşam nasılsın?</h1>
@@ -304,6 +314,14 @@ var NEDEN={
 };
 
 var S={mood:null,mood2:null,mode:null,davet:null,sure:null,kim:null,seen:[],cur:[]};
+/* Platformlarim: Turkiye'de abonelikle izleyebildigin servisler (TMDB/JustWatch verisi) */
+var PLATS=[{id:8,ad:"Netflix"},{id:119,ad:"Prime Video"},{id:337,ad:"Disney+"},{id:1899,ad:"HBO Max"},{id:1904,ad:"TV+"},{id:11,ad:"MUBI"}];
+var PF=[];try{var pq=JSON.parse(localStorage.getItem("filmoda_plat")||"[]");if(Array.isArray(pq))PF=pq.filter(function(x){return PLATS.some(function(p){return p.id===x})})}catch(e){}
+function pfKaydet(){try{localStorage.setItem("filmoda_plat",JSON.stringify(PF))}catch(e){}}
+function pfAdlar(){return PF.map(function(i){return PLATS.filter(function(p){return p.id===i})[0].ad})}
+function pfEkle(p){if(PF.length){p.watch_region="TR";p.with_watch_providers=PF.join("|");p.with_watch_monetization_types="flatrate"}return p}
+/* secili platform varken havuz kuculur: esikleri biraz gevset */
+function pfGevset(p,sayi,puan){if(PF.length){if(p["vote_count.gte"])p["vote_count.gte"]=String(Math.round(parseInt(p["vote_count.gte"],10)*sayi));if(p["vote_average.gte"])p["vote_average.gte"]=String(Math.round((parseFloat(p["vote_average.gte"])-puan)*10)/10)}return p}
 var store={izlenecek:[],izlendi:[]};
 try{var raw=localStorage.getItem("filmoda2");if(raw){var p=JSON.parse(raw);if(p&&Array.isArray(p.izlenecek)&&Array.isArray(p.izlendi)){var gecerli=function(x){return x&&typeof x==="object"&&x.id};store={izlenecek:p.izlenecek.filter(gecerli),izlendi:p.izlendi.filter(gecerli)}}}}catch(e){}
 function save(){try{localStorage.setItem("filmoda2",JSON.stringify(store))}catch(e){}}
@@ -490,7 +508,8 @@ function havuz(){
   function getir(extra,win){
     deneme++;
     var p={};Object.keys(base).forEach(function(k){p[k]=base[k]});Object.keys(extra).forEach(function(k){p[k]=extra[k]});
-    p.page=String(1+rndInt(win));
+    if(PF.length){pfGevset(p,.5,.3);win=Math.max(1,Math.ceil(win/3))}
+    pfEkle(p);p.page=String(1+rndInt(win));
     return tmdb("/discover/movie",p).then(function(d){return d.results||[]}).catch(function(){return null}).then(function(r){
       if(r&&r.length)return r;
       if(p.page==="1"){if(!r)hata++;return r||[]}
@@ -518,6 +537,7 @@ function havuz(){
       var p={include_adult:"false",without_genres:yasak};
       if(max)p["with_runtime.lte"]=String(max);
       Object.keys(ex2).forEach(function(k){p[k]=ex2[k]});Object.keys(extra).forEach(function(k){p[k]=extra[k]});
+      pfGevset(p,.5,.2);pfEkle(p);
       return tmdb("/discover/movie",p).then(function(d){var r=(d.results||[]).slice(0,12);r.forEach(function(x){x._p=1});return r}).catch(function(){return []});
     }
     if(tp.length)isler.push(g2({with_people:tp.join("|")}));
@@ -530,8 +550,12 @@ function havuz(){
     isler.push(tmdb("/movie/"+b.id+"/recommendations").then(function(d){
       var r=(d.results||[]).filter(function(x){return (x.vote_count||0)>=V&&(x.vote_average||0)>=6.8}).sort(function(a,c){return c.vote_count-a.vote_count}).slice(0,10);
       r.forEach(function(x){x._b=b.t});
-      if(!max)return r;
-      return Promise.all(r.map(function(x){return tmdb("/movie/"+x.id).then(function(d2){return (d2.runtime&&d2.runtime<=max)?x:null}).catch(function(){return null})})).then(function(a){return a.filter(Boolean)});
+      /* platform secili ise: sadece o platformlarda olanlar kalsin */
+      var pfOk=!PF.length?Promise.resolve(r):Promise.all(r.map(function(x){return tmdb("/movie/"+x.id+"/watch/providers").then(function(w){var tr=w.results&&w.results.TR;return tr&&(tr.flatrate||[]).some(function(q){return PF.indexOf(q.provider_id)>=0})?x:null}).catch(function(){return null})})).then(function(a){return a.filter(Boolean)});
+      return pfOk.then(function(r){
+        if(!max)return r;
+        return Promise.all(r.map(function(x){return tmdb("/movie/"+x.id).then(function(d2){return (d2.runtime&&d2.runtime<=max)?x:null}).catch(function(){return null})})).then(function(a){return a.filter(Boolean)});
+      });
     }).catch(function(){return []}));
   });
   return Promise.all(isler).then(function(parts){
@@ -721,6 +745,7 @@ function paramsBasit(){
   else if(S.kim==="iki"){p["vote_average.gte"]="7.3"}
   else if(S.kim==="arkadas"){p.with_genres=m.g+"|35|28|12";p["vote_count.gte"]="2500"}
   else if(S.kim==="tek"){p["vote_count.gte"]="700"}
+  if(PF.length){pfGevset(p,.4,.3);p.page=String(1+Math.floor(Math.random()*3));pfEkle(p)}
   return p;
 }
 function oneriBasit(){
@@ -779,7 +804,7 @@ function goster(){
   }
   oneri().catch(function(){return oneriBasit()}).then(function(list){
     $("again").disabled=false;rail.innerHTML="";
-    if(!list.length){rail.appendChild(el("div","msg","Bu seçimlere uyan film bulamadık. Süreyi ya da ruh halini değiştirip tekrar dene."));return}
+    if(!list.length){rail.appendChild(el("div","msg",PF.length?"Seçtiğin platformlarda bu seçimlere uyan film bulamadık. Süreyi, ruh halini ya da platformlarını değiştirip tekrar dene.":"Bu seçimlere uyan film bulamadık. Süreyi ya da ruh halini değiştirip tekrar dene."));return}
     list.forEach(function(f){S.seen.push(f.id)});
     if(S.mode==="tek")list=list.slice(0,1);
     if(S.mode==="davetli"&&S.mood2){var ORT=["İkinizin de havasına uyuyor.","İkinizi ortada buluşturur.","Tartışmayı bitirecek seçim."];list.forEach(function(f,i){f._why=ORT[i%3]});$("paylas").classList.remove("hide")}
@@ -966,6 +991,7 @@ function kapat(){
   var acik=$("sheet").classList.contains("on");
   $("scrim").classList.remove("on");$("sheet").classList.remove("on");renderListe();
   if(acik&&history.state&&history.state.sheet)history.back();
+  pfSonra();
 }
 /* Fragman oynatici (uygulama icinde, YouTube gomme) */
 function fragman(key,link,d){
@@ -987,9 +1013,37 @@ var trGeri=false;
 window.addEventListener("popstate",function(){
   if(trGeri){trGeri=false;return}
   if($("trl")){$("trl").remove();return}
-  if($("sheet").classList.contains("on")){$("scrim").classList.remove("on");$("sheet").classList.remove("on");renderListe()}
+  if($("sheet").classList.contains("on")){$("scrim").classList.remove("on");$("sheet").classList.remove("on");renderListe();pfSonra()}
 });
 $("scrim").onclick=kapat;
+/* ===== PLATFORMLARIM ===== */
+var pfDeg=false;
+function pfEtiket(){
+  var a=pfAdlar(),b=$("plb");
+  $("plt").textContent=!a.length?"Platformlarım":(a.length===1?a[0]:a[0]+" +"+(a.length-1));
+  b.classList.toggle("on",a.length>0);
+}
+function pfAc(){
+  var sh=$("sheet");
+  var h='<button class="close" id="cl" aria-label="Kapat">✕</button><div class="sbody pfs"><h2>Hangi platformların var?</h2><p class="ov">Sadece bunlarda izleyebileceğin filmleri önerelim.</p><div class="pfc">';
+  PLATS.forEach(function(p){h+='<button class="chip" data-id="'+p.id+'" aria-pressed="'+(PF.indexOf(p.id)>=0)+'">'+p.ad+'</button>'});
+  h+='</div><button class="cta" id="pf-tm">Tamam</button><p class="pfn">Hiçbirini seçmezsen tüm filmlerden öneririz.<br>Bilgiler Türkiye için, JustWatch verisine göre.</p></div>';
+  sh.innerHTML=h;sh.scrollTop=0;
+  [].forEach.call(sh.querySelectorAll(".pfc .chip"),function(c){c.onclick=function(){
+    var id=parseInt(c.getAttribute("data-id"),10),i=PF.indexOf(id);
+    if(i>=0)PF.splice(i,1);else PF.push(id);
+    c.setAttribute("aria-pressed",String(i<0));pfKaydet();pfEtiket();pfDeg=true;
+  }});
+  $("cl").onclick=kapat;$("pf-tm").onclick=kapat;
+  $("scrim").classList.add("on");sh.classList.add("on");
+  if(!(history.state&&history.state.sheet))history.pushState({sheet:1},"");
+}
+/* panel kapaninca: platform degistiyse ve sonuc ekranindaysa listeyi yenile */
+function pfSonra(){
+  if(!pfDeg)return;pfDeg=false;
+  if(!$("step2").classList.contains("hide")&&S.mood)goster();
+}
+$("plb").onclick=pfAc;pfEtiket();
 document.addEventListener("keydown",function(e){if(e.key==="Escape")kapat()});
 
 /* Liste */
