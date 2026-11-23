@@ -47,36 +47,36 @@ def click(st,g=.12):
     k=tk(.05); add(np.sin(2*np.pi*1800*k)*np.exp(-k/.008),st,.5,g)
 def tick(f,st,g=.12,pan=.5):
     bell(f,st,g,pan,.9)
-# ---------- 0 - 3.88 sakin, yorgun gun hissi ----------
-for j,m in enumerate((48,55,64,67)): pad(m,0,3.9,.07 if j else .1,1.2,.6,.5)
-for t,m in((0.4,76),(1.2,72),(2.0,74),(2.8,67)): pluck(m,t,.07,.5,.7)
-riser(2.6,1.28,.16)
-# ---------- 3.88 ->  120 bpm ----------
-T0=3.88; beat=.5; bar=2.0
-boom(T0,.55); whoosh(T0-.35,.5,.35); bell(84,T0,.08,.4,2.2)
+# ---------- 0 - 4.58 sakin, yorgun gun hissi ----------
+for j,m in enumerate((48,55,64,67)): pad(m,0,4.7,.07 if j else .1,1.4,.6,.5)
+for t,m in((0.5,76),(1.5,72),(2.5,74),(3.5,67)): pluck(m,t,.065,.5,.8)
+riser(3.3,1.25,.14)
+# ---------- 4.58 -> 120 bpm ----------
+T0=4.58; beat=.5; bar=2.0
+boom(T0,.5); whoosh(T0-.4,.5,.28); bell(84,T0,.07,.4,2.4)
 prog=[(48,(60,64,67),[72,76,79,76]),(43,(59,62,67),[71,74,79,74]),(45,(60,64,69),[72,76,81,76]),(41,(60,65,69),[72,77,81,77])]
 bar_i=0; t=T0
-while t<TOT-.2:
+while t<15.3:
     root,ch,arp=prog[bar_i%4]
     for m in ch: pad(m,t,bar+.15,.05,.08,.35,.5)
     for b in range(4):
-        tb=t+b*beat; kick(tb,.28 if b%2==0 else .22)
-        if b%2==1: clap(tb,.13)
-        hat(tb+.25,.045); hat(tb,.025)
-        bass(root-12,tb,.42,.2); bass(root-12,tb+.25,.2,.1) if b%2==0 else None
+        tb=t+b*beat
+        if tb>=T0+2.0: kick(tb,.2 if b%2==0 else .15)
+        if b%2==1 and tb>=T0+2.0: clap(tb,.09)
+        if tb>=T0+2.0: hat(tb+.25,.035)
+        bass(root-12,tb,.42,.16)
         for e in range(2):
-            ts=tb+e*.25
-            pluck(arp[(b*2+e)%4],ts,.075,.3+.4*((b*2+e)%2),.28)
+            ts=tb+e*.5*beat*2/2
+            if e==0 or True: pluck(arp[(b*2+e)%4],tb+e*.25,.06,.3+.4*((b*2+e)%2),.3)
     bar_i+=1; t+=bar
-# ---------- efektler (ses kelimelerine gore) ----------
-click(4.52); blip(700,5.82,.1); click(5.72)
-whoosh(5.75,.4,.3)
-for tt,f in((6.06,520),(6.34,660),(6.62,820)): blip(f,tt,.16); bell(f*2,tt,.05,.5,.8)
-whoosh(7.1,.35,.25,False); whoosh(7.2,.4,.3); blip(900,7.28,.14); bell(96,7.3,.05,.5,1.2)
-bell(91,9.08,.05,.5,1.2)
-for tt,f in((9.84,81),(10.78,84),(11.74,88)): tick(f,tt,.14); blip(f*8,tt,.07)
-whoosh(12.1,.45,.35); boom(12.56,.5); bell(88,12.56,.09,.4,2.4); bell(96,12.7,.05,.6,2.0)
-for j,m in enumerate((48,60,64,67,76)): pad(m,12.56,2.8,.07,.05,1.2)
+# bitis bolumu (15.36 -> son): sade, genis
+for j,m in enumerate((48,60,64,67,76)): pad(m,15.36,3.2,.07,.05,1.4)
+# ---------- efektler (seyrek, yumusak) ----------
+click(5.95,.1)
+for tt,f in((6.8,520),(7.25,660),(7.7,820)): blip(f,tt,.1); bell(f*2,tt,.04,.5,.9)
+blip(900,8.68,.09); bell(96,8.7,.05,.5,1.4); bell(91,10.25,.045,.5,1.2)
+for tt,f in((11.94,81),(12.88,84),(13.84,88)): tick(f,tt,.12)
+whoosh(14.9,.45,.25); boom(15.36,.45); bell(88,15.36,.09,.4,2.6); bell(96,15.5,.05,.6,2.2)
 # ---------- son ----------
 fade=np.ones(n); ft=int(.7*SR); a=int(TOT*SR); fade[a-ft:a]=np.linspace(1,0,ft); fade[a:]=0
 x=np.stack([L*fade,R*fade],1)
