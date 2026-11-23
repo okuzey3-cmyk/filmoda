@@ -793,7 +793,7 @@ function goster(){
     var box=el("div","msg","Filmler şu an yüklenemedi. İnternet bağlantını kontrol et.");
     var b=el("button","cta","Tekrar dene");b.style.marginTop="14px";b.onclick=goster;
     box.appendChild(b);rail.appendChild(box);
-    if(son&&son.list&&son.list.length){var t=el("div","msg","Son önerilerin:");t.style.display="none";ciz(son.list)}
+    if(son&&son.list&&son.list.length){box.insertBefore(el("p",null,"Aşağıda en son baktığın öneriler var."),b);b.style.marginTop="14px";ciz(son.list)}
   });
 }
 $("rail").addEventListener("scroll",function(){
