@@ -14,9 +14,6 @@ jobs:
           git config user.name "reklam-bot"
           git config user.email "reklam-bot@users.noreply.github.com"
           git add ai/reklam
-          git commit -m "Ses kelime zamanlari
-
-Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_016gSRef9pBABgfCFpVkZriG" || true
+          git commit -m "Ses kelime zamanlari" || true
           git pull --rebase
           git push
