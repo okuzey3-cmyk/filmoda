@@ -5,17 +5,17 @@ ok 4-ana-secili
 pil: Netflix +1
 ok 5-sonuc
 run 0 kart 3
-  film: Ratatuy | abonelik: ['Disney Plus']
-  film: Predator: Vahşi Topraklar | abonelik: ['Disney Plus']
-  film: Köpek Adası | abonelik: ['Disney Plus']
+  film: Yerime Geç | abonelik: ['Netflix']
+  film: Yıldız Savaşları: Yeni Umut | abonelik: ['Disney Plus']
+  film: Büyük Budapeşte Oteli | abonelik: ['Disney Plus']
 run 1 kart 3
-  film: Nimona | abonelik: ['Netflix']
-  film: Free Solo | abonelik: ['Disney Plus']
-  film: Sevimli Canavarlar | abonelik: ['Disney Plus']
+  film: Zootropolis 2 | abonelik: ['Disney Plus']
+  film: Gökteki Kale | abonelik: ['Netflix']
+  film: K-Pop: İblis Avcıları | abonelik: ['Netflix']
 run 2 kart 3
-  film: Kayıp Balık Nemo | abonelik: ['Disney Plus']
-  film: Galaksinin Koruyucuları | abonelik: ['Disney Plus']
-  film: Sevdiğim Tüm Erkeklere: Şimdi ve Sonsuza Dek | abonelik: ['Netflix']
+  film: Suzume | abonelik: ['Netflix', 'Crunchyroll']
+  film: Zootropolis: Hayvanlar Şehri | abonelik: ['Disney Plus']
+  film: Vahşi Robot | abonelik: ['Netflix']
 pil son: Netflix
 ok 6-sonuc-yenilendi
 discover filtreli cagri sayisi: 16 / 16
