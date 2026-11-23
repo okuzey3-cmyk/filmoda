@@ -1,0 +1,22 @@
+ok 1-ana
+ok 2-panel-bos
+ok 3-panel-secili
+ok 4-ana-secili
+pil: Netflix +1
+ok 5-sonuc
+run 0 kart 3
+  film: Ratatuy | abonelik: ['Disney Plus']
+  film: Predator: Vahşi Topraklar | abonelik: ['Disney Plus']
+  film: Köpek Adası | abonelik: ['Disney Plus']
+run 1 kart 3
+  film: Nimona | abonelik: ['Netflix']
+  film: Free Solo | abonelik: ['Disney Plus']
+  film: Sevimli Canavarlar | abonelik: ['Disney Plus']
+run 2 kart 3
+  film: Kayıp Balık Nemo | abonelik: ['Disney Plus']
+  film: Galaksinin Koruyucuları | abonelik: ['Disney Plus']
+  film: Sevdiğim Tüm Erkeklere: Şimdi ve Sonsuza Dek | abonelik: ['Netflix']
+pil son: Netflix
+ok 6-sonuc-yenilendi
+discover filtreli cagri sayisi: 16 / 16
+hatalar: []
