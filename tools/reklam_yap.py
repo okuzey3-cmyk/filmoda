@@ -99,7 +99,7 @@ subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",vid,"-i",f"{TMP}/s
 print('yatay', flush=True)
 # yatay 16:9: telefon ortada, koyu zemin
 subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",f"{OUT}/filmoda-reklam-dikey.mp4","-filter_complex",
-  "color=c=0x17101A:s=1920x1080[bg];[0:v]scale=-2:1080[v];[bg][v]overlay=(W-w)/2:0,format=yuv420p","-c:v","libx264","-crf","20","-preset","veryfast","-c:a","copy","-movflags","+faststart",f"{OUT}/filmoda-reklam-yatay.mp4"])
+  "color=c=0x17101A:s=1920x1080:d=60[bg];[0:v]scale=-2:1080[v];[bg][v]overlay=(W-w)/2:0:shortest=1,format=yuv420p","-c:v","libx264","-crf","20","-preset","veryfast","-c:a","copy","-movflags","+faststart",f"{OUT}/filmoda-reklam-yatay.mp4"])
 for k, s in enumerate([3, 12, 19, 27]):
     subprocess.call(["ffmpeg","-y","-loglevel","error","-ss",str(s),"-i",f"{OUT}/filmoda-reklam-dikey.mp4","-frames:v","1","-vf","scale=360:-2",f"{OUT}/kare{k}.png"])
 print("tamam", total, starts)
