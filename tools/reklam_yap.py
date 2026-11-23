@@ -61,9 +61,10 @@ async def run():
         t = basla(2); await pg.wait_for_timeout(700); await ev("document.querySelectorAll('#moods .mood')[1].click()"); await bekle(t,2)
         t = basla(3); await ev("document.querySelectorAll('#sure .chip, #sure button')[1].click()"); await pg.wait_for_timeout(700)
         await ev("document.querySelectorAll('#kim .chip, #kim button')[1].click()"); await pg.wait_for_timeout(300)
-        await ev("window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})"); await bekle(t,3)
-        t = basla(4); await pg.click("#go"); await pg.wait_for_selector("#rail .card", timeout=40000)
-        await pg.wait_for_function("[...document.images].every(i=>i.complete)", timeout=30000); await pg.wait_for_timeout(1500)
+        await ev("window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})"); await pg.wait_for_timeout(900)
+        await pg.click("#go"); await bekle(t,3)
+        t = basla(4); await pg.wait_for_selector("#rail .card", timeout=40000)
+        await pg.wait_for_function("[...document.images].every(i=>i.complete)", timeout=30000); await pg.wait_for_timeout(1300)
         await ev("document.querySelectorAll('#rail .card')[0].click()"); await pg.wait_for_selector("#ad", timeout=40000)
         await bekle(t,4)
         t = basla(5); await ev("document.getElementById('sheet').scrollTo({top:300,behavior:'smooth'})"); await bekle(t,5)
@@ -72,6 +73,7 @@ async def run():
         await cdp.send("Page.stopScreencast"); await c.close(); await b.close()
         return total
 total = asyncio.run(run())
+frames[0] = (0.0, frames[0][1])
 print("kayit bitti", len(frames), flush=True)
 # kareler -> degisken kare hizli video (concat)
 os.makedirs(TMP+"/fr", exist_ok=True)
@@ -106,13 +108,13 @@ PlayResY: 1920
 WrapStyle: 0
 [V4+ Styles]
 Format: Name,Fontname,Fontsize,PrimaryColour,OutlineColour,BackColour,Bold,Outline,Shadow,Alignment,MarginL,MarginR,MarginV
-Style: D,DejaVu Sans,54,&H00FFFFFF,&HCC000000,&H00000000,1,5,0,2,90,90,330
+Style: D,DejaVu Sans,50,&H00FFFFFF,&H00000000,&H00000000,1,3,0,2,100,100,110
 [Events]
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 """ + "\n".join(lines)
 open(f"{TMP}/a.ass","w",encoding="utf-8").write(ass)
 print('ffmpeg dikey', flush=True)
-subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",vid,"-i",f"{TMP}/ses.m4a","-vf",f"scale=1080:1920:flags=lanczos,ass={TMP}/a.ass,format=yuv420p",
+subprocess.check_call(["ffmpeg","-y","-loglevel","error","-i",vid,"-i",f"{TMP}/ses.m4a","-filter_complex",f"color=c=0x17101A:s=1080x1920:d=120[bg];[0:v]scale=900:1600:flags=lanczos[p];[bg][p]overlay=90:40:shortest=1,ass={TMP}/a.ass,format=yuv420p[v]","-map","[v]","-map","1:a",
   "-c:v","libx264","-crf","20","-preset","veryfast","-r","30","-c:a","aac","-b:a","160k","-shortest","-movflags","+faststart",f"{OUT}/filmoda-reklam-dikey.mp4"])
 print('yatay', flush=True)
 # yatay 16:9: telefon ortada, koyu zemin
