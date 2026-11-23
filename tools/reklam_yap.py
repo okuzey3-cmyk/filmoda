@@ -65,7 +65,7 @@ async def run():
         ca = time.time()-T0; await pg.click("#go")
         t = basla(4); await pg.wait_for_selector("#rail .card", timeout=40000)
         await pg.wait_for_function("(()=>{const a=[...document.querySelectorAll('#rail .card img')];return a.length>=2&&a.every(i=>i.complete&&i.naturalWidth>0)})()", timeout=40000); await pg.wait_for_timeout(900)
-        cb = time.time()-T0; CUT.append((ca+0.15, cb)); t = time.time(); await pg.wait_for_timeout(2200)
+        cb = time.time()-T0; CUT.append((ca+0.15, cb)); t = time.time(); await ev("document.getElementById('rail').scrollBy(2,0)"); await pg.wait_for_timeout(150); await ev("document.getElementById('rail').scrollBy(-2,0)"); await ev("window.scrollBy(0,1)"); await pg.wait_for_timeout(150); await ev("window.scrollBy(0,-1)"); await pg.wait_for_timeout(1900)
         await ev("document.querySelectorAll('#rail .card')[0].click()"); await pg.wait_for_selector("#ad", timeout=40000)
         await bekle(t,4)
         t = basla(5); await ev("document.getElementById('sheet').scrollTo({top:300,behavior:'smooth'})"); await bekle(t,5)
