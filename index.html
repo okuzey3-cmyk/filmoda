@@ -51,6 +51,8 @@ h1{font-size:34px;line-height:1.1;margin-bottom:6px}
 .mini:active{border-color:var(--accent);color:var(--text)}
 .bay{display:flex;align-items:center;justify-content:center;gap:10px;margin:-6px 0 16px;padding:9px 8px 9px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);font-size:13.5px;line-height:1.4;color:var(--text);text-align:center}
 .bay i{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
+.plb,.bay button{position:relative}
+.plb::after,.bay button::after,.swap::after,.close::after{content:"";position:absolute;top:50%;left:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
 .bay button{flex:none;color:var(--muted);font-size:14px;padding:4px 8px;line-height:1}
 .plb{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;border:1.5px solid var(--line);color:var(--muted);font-family:var(--body);font-weight:600;font-size:13px;line-height:1;transition:border-color .15s,color .15s,background .15s}
 .plb svg{flex:none;color:var(--accent)}
@@ -100,7 +102,7 @@ h1{font-size:34px;line-height:1.1;margin-bottom:6px}
 .sim::-webkit-scrollbar{display:none}
 .sim button{flex:0 0 84px;text-align:left}
 .sim .pwrap{border-radius:12px;box-shadow:none}
-.sim small{display:block;margin-top:5px;font-size:12px;line-height:1.25;color:var(--muted)}
+.sim small{display:block;margin-top:5px;font-size:13px;line-height:1.25;color:var(--muted)}
 .note{width:100%;margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line);color:var(--text);font:inherit;font-size:15px;resize:none}
 .rx{display:flex;gap:8px;margin-top:12px}
 .rx .chip{flex:1;text-align:center}
@@ -166,7 +168,7 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
 .trl .trbg{position:absolute}
 .trl .close{position:absolute;top:14px;right:14px;z-index:3}
 .trhead{width:100%;max-width:720px;display:flex;flex-direction:column;gap:3px;color:#fff}
-.trhead span{font-size:11px;letter-spacing:.22em;opacity:.65}
+.trhead span{font-size:12px;letter-spacing:.22em;opacity:.65}
 .trhead b{font-size:20px;line-height:1.25;font-weight:600}
 .trhead i{font-style:normal;font-size:13px;opacity:.65}
 .trbox{width:100%;max-width:720px;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.08);animation:trpop .4s cubic-bezier(.2,.8,.2,1)}
@@ -199,7 +201,7 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
 .trial .tm button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
 .trial .tc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;min-height:190px}
 .trial .tc div.card{border-radius:16px;aspect-ratio:2/3;display:flex;align-items:flex-end;padding:10px;font-size:13px;line-height:1.25;font-weight:600;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5)}
-.trial .ex{font-size:12px;color:var(--muted);min-height:16px}
+.trial .ex{font-size:13px;color:var(--muted);min-height:16px}
 </style>
 </head>
 <body>
