@@ -1144,21 +1144,45 @@ $("n-ara").onclick=function(){view("ara")};
 
 /* Arama */
 var qt=null,qn=0;
+function norm(x){return String(x||"").toLowerCase().replace(/ı/g,"i").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim()}
+function satir(f,box){
+  var b=el("button","row"),th=el("div","th");
+  if(f.poster_path){var im=new Image();im.alt="";im.loading="lazy";im.src=IMG+"w185"+f.poster_path;im.onerror=function(){im.remove()};th.appendChild(im)}
+  b.appendChild(th);
+  var yildiz=(f.vote_count||0)>=5?'<span style="color:var(--gold);font-weight:600">★ '+(f.vote_average||0).toFixed(1)+'</span>':'';
+  b.appendChild(el("div","t",'<h3>'+esc(f.title)+'</h3><div class="meta" style="margin:2px 0 0">'+yildiz+'<span>'+esc(yil(f.release_date))+'</span></div>'));
+  b.onclick=function(){ac({id:f.id,title:f.title})};
+  box.appendChild(b);
+}
+function iyiMi(f){return !!f.poster_path&&(f.vote_count||0)>=10}
 function ara(){
   var q=$("q").value.trim(),box=$("sonuc"),n=++qn;
   if(q.length<2){box.innerHTML="";return}
-  tmdb("/search/movie",{query:q,include_adult:"false"}).then(function(d){
-    if(n!==qn)return;
-    box.innerHTML="";
-    var r=(d.results||[]).slice(0,20);
-    if(!r.length){box.appendChild(el("div","msg","Bu isimle film bulunamadı."));return}
-    r.forEach(function(f){
-      var b=el("button","row"),th=el("div","th");
-      if(f.poster_path){var im=new Image();im.alt="";im.loading="lazy";im.src=IMG+"w185"+f.poster_path;im.onerror=function(){im.remove()};th.appendChild(im)}
-      b.appendChild(th);
-      b.appendChild(el("div","t",'<h3>'+esc(f.title)+'</h3><div class="meta" style="margin:2px 0 0"><span style="color:var(--gold);font-weight:600">★ '+(f.vote_average||0).toFixed(1)+'</span><span>'+esc(yil(f.release_date))+'</span></div>'));
-      b.onclick=function(){ac({id:f.id,title:f.title})};
-      box.appendChild(b);
+  var qn2=norm(q);
+  Promise.all([
+    tmdb("/search/movie",{query:q,include_adult:"false"}),
+    tmdb("/search/person",{query:q,include_adult:"false"}).catch(function(){return{results:[]}})
+  ]).then(function(res){
+    var film=(res[0].results||[]).slice(0,20),pr=(res[1].results||[])[0];
+    var oyuncu=pr&&qn2.length>=5&&pr.popularity>=8&&norm(pr.name).indexOf(qn2)>-1&&(pr.known_for_department==="Acting"||pr.known_for_department==="Directing");
+    return (oyuncu?tmdb("/person/"+pr.id+"/movie_credits",{}).catch(function(){return null}):Promise.resolve(null)).then(function(kr){
+      if(n!==qn)return;
+      box.innerHTML="";
+      var liste=null;
+      if(oyuncu&&kr){
+        var seen={},hepsi=(pr.known_for_department==="Directing"?(kr.crew||[]).filter(function(c){return c.job==="Director"}):(kr.cast||[]));
+        liste=hepsi.filter(function(f){if(seen[f.id]||!f.poster_path||(f.vote_count||0)<300)return false;seen[f.id]=1;return true}).sort(function(a,c){return c.vote_count-a.vote_count}).slice(0,15);
+      }
+      if(liste&&liste.length){
+        box.appendChild(el("div","label",esc(pr.name)+" filmleri"));
+        liste.forEach(function(f){satir(f,box)});
+        var ids={};liste.forEach(function(f){ids[f.id]=1});
+        var ek=film.filter(function(f){return !ids[f.id]&&iyiMi(f)&&(f.vote_count||0)>=50}).slice(0,4);
+        if(ek.length){box.appendChild(el("div","label","Adında geçenler"));ek.forEach(function(f){satir(f,box)})}
+        return;
+      }
+      if(!film.length){box.appendChild(el("div","msg","Bu isimle film bulunamadı."));return}
+      film.filter(iyiMi).concat(film.filter(function(f){return !iyiMi(f)})).forEach(function(f){satir(f,box)});
     });
   }).catch(function(){
     if(n!==qn)return;
