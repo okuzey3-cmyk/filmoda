@@ -763,6 +763,7 @@ function oneriBasit(){
     return liste.slice(0,3);
   });
 }
+function hataSil(){var h=$("hata");if(h)h.remove()}
 function goster(){
   (S.cur||[]).forEach(function(c){if(!(S.opened&&S.opened[c.id]))sinyal("sk",c.genre_ids)});S.cur=[];
   var m=moodOf(S.mood);
@@ -773,6 +774,7 @@ function goster(){
   if(S.mode==="tek"){$("rtitle").textContent="Kararsız kalma.";$("rsub").textContent="Bu akşam için tek öneri. Beğenmezsen aşağıdan başkasını iste."}
   if(S.mode==="davetli"&&S.mood2){$("rtitle").textContent="İkinizin ortak seçimi.";$("rsub").innerHTML='<span class="mps">'+moodPill("Arkadaşın",S.mood2)+moodPill("Sen",S.mood)+'</span>İkinize de uyan üç film.'}
   $("paylas").classList.add("hide");$("bvaz").classList.add("hide");
+  hataSil();
   var g=$("glow");g.style.setProperty("--g",(S.mode==="davetli"&&S.mood2)?"color-mix(in srgb,"+m.c+" 50%,"+moodOf(S.mood2).c+")":m.c);g.classList.add("on");
   var rail=$("rail");rail.innerHTML="";$("dots").innerHTML="";rail.classList.toggle("tek",S.mode==="tek");$("dots").style.display=S.mode==="tek"?"none":"";
   rail.appendChild(el("div","skeleton"));rail.appendChild(el("div","skeleton"));
@@ -819,11 +821,11 @@ function goster(){
     sonKaydet();
     if(S.seen.length>30)S.seen=S.seen.slice(-12);
   }).catch(function(){
-    $("again").disabled=false;rail.innerHTML="";
+    $("again").disabled=false;rail.innerHTML="";$("dots").innerHTML="";hataSil();
     var son=null;try{son=JSON.parse(localStorage.getItem("filmoda_son")||"null")}catch(e){}
-    var box=el("div","msg","Filmler şu an yüklenemedi. İnternet bağlantını kontrol et.");
+    var box=el("div","msg","Filmler şu an yüklenemedi. İnternet bağlantını kontrol et.");box.id="hata";box.style.marginBottom="14px";
     var b=el("button","cta","Tekrar dene");b.style.marginTop="14px";b.onclick=goster;
-    box.appendChild(b);rail.appendChild(box);
+    box.appendChild(b);rail.parentNode.insertBefore(box,rail);
     if(son&&son.list&&son.list.length){box.insertBefore(el("p",null,"Aşağıda en son baktığın öneriler var."),b);b.style.marginTop="14px";ciz(son.list)}
   });
 }
@@ -849,15 +851,18 @@ function platKaydet(id,o){
   var now=Date.now(),degisti=false;
   ["izlenecek","izlendi"].forEach(function(k){store[k].forEach(function(x){
     if(x.id!==id)return;
+    /* pt: tum abonelik platformlari (karsilastirma icin); pl: ekranda gosterilen ilk 4 */
+    var onceki=x.pt||x.pl,eksik=!x.pt&&x.pl&&x.pl.length>=4;
+    if(eksik){delete x.pn;delete x.pnt}
     if(x.pl&&x.pc){
-      var gitti=x.pl.filter(function(n){return o.ab.indexOf(n)<0});
-      var geldi=o.ab.filter(function(n){return x.pl.indexOf(n)<0});
+      var gitti=onceki.filter(function(n){return o.ab.indexOf(n)<0});
+      var geldi=eksik?[]:o.ab.filter(function(n){return onceki.indexOf(n)<0});
       if(gitti.length){x.pg=gitti;x.pgt=now}
       if(geldi.length){x.pn=geldi;x.pnt=now}
       if(x.pg)x.pg=x.pg.filter(function(n){return o.ab.indexOf(n)<0});
       if(x.pg&&!x.pg.length)delete x.pg;
     }
-    x.pl=o.ab.slice(0,4);x.pk=o.ki.length||o.sa.length?1:0;x.pc=now;degisti=true;
+    x.pt=o.ab.slice();x.pl=o.ab.slice(0,4);x.pk=o.ki.length||o.sa.length?1:0;x.pc=now;degisti=true;
   })});
   if(degisti)save();
 }
@@ -881,7 +886,9 @@ function zamanYazi(t){
 }
 
 /* Detay */
+var acNo=0; /* yalnizca en son acilan paneli ciz: gec gelen eski cevap yok sayilir */
 function ac(f){
+  var no=++acNo;
   S.opened=S.opened||{};S.opened[f.id]=1;sinyal("op",f.genre_ids);
   var sh=$("sheet");
   sh.innerHTML='<button class="close" id="cl" aria-label="Kapat">✕</button><div class="hero"></div><div class="sbody"><h2>'+esc(f.title||f.t)+'</h2><p class="ov" style="opacity:.6">Yükleniyor…</p></div>';
@@ -890,8 +897,9 @@ function ac(f){
   if(!(history.state&&history.state.sheet))history.pushState({sheet:1},"");
   tmdb("/movie/"+f.id,{append_to_response:"videos,watch/providers,recommendations,credits,keywords",include_video_language:"tr,en,null"}).then(function(d){
     try{ozellik(d);l2Save();ogren(f,.3,d)}catch(e){}
-    return (d.overview?Promise.resolve(d):fetch(API+"/movie/"+f.id+"?language=en-US&api_key="+KEY).then(function(r){return r.json()}).then(function(e){d.overview=e.overview||"";return d})).then(detay);
+    return (d.overview?Promise.resolve(d):fetch(API+"/movie/"+f.id+"?language=en-US&api_key="+KEY).then(function(r){return r.json()}).then(function(e){d.overview=e.overview||"";return d})).then(function(x){if(no===acNo)detay(x)});
   }).catch(function(){
+    if(no!==acNo)return;
     var b=sh.querySelector(".sbody p.ov");if(b)b.textContent="Ayrıntılar yüklenemedi. İnternet bağlantını kontrol et.";
   });
 }
@@ -1054,6 +1062,7 @@ function pfEtiket(){
   b.classList.toggle("on",a.length>0);
 }
 function pfAc(){
+  acNo++;
   var sh=$("sheet");
   var h='<button class="close" id="cl" aria-label="Kapat">✕</button><div class="sbody pfs"><h2>Hangi platformların var?</h2><p class="ov">Sadece bunlarda izleyebileceğin filmleri önerelim.</p><div class="pfc">';
   PLATS.forEach(function(p){h+='<button class="chip" data-id="'+p.id+'" aria-pressed="'+(PF.indexOf(p.id)>=0)+'">'+p.ad+'</button>'});
