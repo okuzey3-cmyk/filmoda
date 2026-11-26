@@ -769,7 +769,9 @@ function oneriBasit(){
   });
 }
 function hataSil(){var h=$("hata");if(h)h.remove()}
+var gosterNo=0; /* yalnizca en son istenen sonuclari ciz: gec gelen eski cevap yok sayilir */
 function goster(){
+  var no=++gosterNo;
   (S.cur||[]).forEach(function(c){if(!(S.opened&&S.opened[c.id]))sinyal("sk",c.genre_ids)});S.cur=[];
   var m=moodOf(S.mood);
   $("step1").classList.add("hide");$("step2").classList.remove("hide");window.scrollTo(0,0);
@@ -792,7 +794,8 @@ function goster(){
     sw.onclick=function(e){
       e.stopPropagation();if(sw.classList.contains("bus"))return;sw.classList.add("bus");
       var kalan=S.cur.filter(function(x,j){return j!==i});
-      oneri({count:1,keep:kalan}).catch(function(){return oneriBasit()}).then(function(l){
+      oneri({count:1,keep:kalan}).catch(function(){return no===gosterNo?oneriBasit():[]}).then(function(l){
+        if(no!==gosterNo)return;
         var ids=S.cur.map(function(x){return x.id});
         var n=l.filter(function(x){return ids.indexOf(x.id)<0})[0];
         if(!n){sw.classList.remove("bus");return}
@@ -815,7 +818,8 @@ function goster(){
     var dots=$("dots");dots.innerHTML="";list.forEach(function(_,i){dots.appendChild(el("i",i===0?"on":""))});
     rail.scrollLeft=0;
   }
-  oneri().catch(function(){return oneriBasit()}).then(function(list){
+  oneri().catch(function(){return no===gosterNo?oneriBasit():[]}).then(function(list){
+    if(no!==gosterNo)return;
     $("again").disabled=false;rail.innerHTML="";
     if(!list.length){rail.appendChild(el("div","msg",PF.length?"Seçtiğin platformlarda bu seçimlere uyan film bulamadık. Süreyi, ruh halini ya da platformlarını değiştirip tekrar dene.":"Bu seçimlere uyan film bulamadık. Süreyi ya da ruh halini değiştirip tekrar dene."));return}
     list.forEach(function(f){S.seen.push(f.id)});
@@ -826,6 +830,7 @@ function goster(){
     sonKaydet();
     if(S.seen.length>30)S.seen=S.seen.slice(-12);
   }).catch(function(){
+    if(no!==gosterNo)return;
     $("again").disabled=false;rail.innerHTML="";$("dots").innerHTML="";hataSil();
     var son=null;try{son=JSON.parse(localStorage.getItem("filmoda_son")||"null")}catch(e){}
     var box=el("div","msg","Filmler şu an yüklenemedi. İnternet bağlantını kontrol et.");box.id="hata";box.style.marginBottom="14px";
@@ -1206,7 +1211,7 @@ $("go").onclick=function(){
   S.mode=null;S.mood2=null;goster();
 };
 $("again").onclick=goster;
-$("back").onclick=function(){modSifirla();$("step2").classList.add("hide");$("step1").classList.remove("hide");$("glow").classList.remove("on");window.scrollTo(0,0)};
+$("back").onclick=function(){gosterNo++;modSifirla();$("step2").classList.add("hide");$("step1").classList.remove("hide");$("glow").classList.remove("on");window.scrollTo(0,0)};
 /* ===== Kararsizim + Birlikte izleyelim ===== */
 function secimSifirla(){
   S.mood=S.sure=S.kim=null;
@@ -1220,6 +1225,7 @@ function modSifirla(){
   $("h1a").textContent="Bu akşam nasılsın?";$("suba").textContent="Birkaç şey söyle, sana üç film seçelim.";
   $("go").textContent="Filmleri getir";$("bvaz").classList.add("hide");$("bmsg").classList.add("hide");
   if(dual)secimSifirla();
+  if(S.onceki){S.mood=S.onceki.mood;S.sure=S.onceki.sure;S.kim=S.onceki.kim;S.onceki=null;check()}
 }
 var KISA={sakin:"Dinlenmek",neseli:"Neşeli",duygusal:"Duygusal",heyecan:"Heyecan",dusunce:"Düşünmek"};
 function moodPill(on,id){var m=moodOf(id);return '<span class="mp" style="--c:'+m.c+'"><i></i>'+(on?on+" · ":"")+KISA[id]+'</span>'}
@@ -1252,7 +1258,7 @@ function davetliBasla(a){
 $("birlikte").onclick=davetciBasla;
 $("bvaz").onclick=modSifirla;
 $("kararsiz").onclick=function(){
-  var m=pick(MOODS);S.mode="tek";S.mood2=null;S.mood=m.id;S.sure="fark";S.kim="tek";goster();
+  var m=pick(MOODS);S.onceki={mood:S.mood,sure:S.sure,kim:S.kim};S.mode="tek";S.mood2=null;S.mood=m.id;S.sure="fark";S.kim="tek";goster();
 };
 $("paylas").onclick=function(){
   var ad=S.cur.map(function(f,i){return (i+1)+". "+(f.title||f.t)}).join("\n");
