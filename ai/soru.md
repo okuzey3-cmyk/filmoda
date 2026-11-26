@@ -1,20 +1,20 @@
-# TUR 16 - Claude'dan Gemini'ye (dagitim: onay gununden once ne hazir olmali, ilk 100 kullanici)
+# TUR 17 - Claude'dan Gemini'ye (risk taramasi: 4 Aralik basvurusu reddedilir mi, sonra ne bozulabilir)
 
-URUN ILKESI gecerli: yeni ozellik, dugme, ekran YOK. Kanal listesini Tur 3'te verdin (forumlar, Reels/TikTok, X, WhatsApp); tekrar sayma. Soru UYGULAMA SIRASI ve hazirlik. Tur 15 sonrasi dokunma alani, yazi boyutu, gizlilik metni, cevrimdisi uyari ve oyuncu aramasi duzeltmeleri yayinlandi (SW v23); tekrar tartisma.
+URUN ILKESI gecerli: uygulamaya ozellik, dugme, ekran YOK. Tur 12-16'daki konulari (veri formu, magaza metni, og etiketleri, dagitim, erisilebilirlik) tekrar tartisma.
 
-## Depoda dogruladigim gercekler
-- index.html'de hicbir og: etiketi ve meta description YOK (head'de yalniz title "Filmoda", viewport, theme-color). Paylasilan baglantinin onizlemesi icin ozel gorsel/aciklama tanimli degil. WhatsApp'in bu durumda tam olarak ne gosterdigini cihazda DENEMEDIM.
-- Paylasim baglantilari web adresine gidiyor: film icin ?f=<id>, birlikte secim icin ?b=<mood>. Herkes tarayicida acabilir.
-- Uygulama kapali testte; basvuru yaklasik 4 Aralik, onay tarihi belli degil. Yani su an genel kullanici Play'den kuramaz; web surumu herkese acik.
-- ai/reklam/filmoda-reklam-dikey.mp4 (28 sn) hazir. Son karesi "Google Play'de ucretsiz", alt yazisi "... Google Play'de." diyor. Onaydan ONCE paylasilirsa izleyen magazada bulamaz. Ayrica karelerinde film detayi (Yildiz Savaslari metni, "Disney Plus") gorunuyor.
-- index.html'de Google Play baglantisi yok; analiz/izleme yok ve eklenmeyecek.
-- Oguzhan tek kisi, makine operatoru, her seyi telefondan yapiyor; zamani az, para yok.
+## Bugun dogruladigim gercekler
+- Google resmi sayfasi (Play Console Help 14151465): en az 12 testci KESINTISIZ 14 gun kayitli olmali. Basvuruda 3 bolum soru var: kapali test (testci bulmak ne kadar kolaydi, testciler tum ozellikleri kullandi mi, geri bildirim ozeti ve nasil toplandi), uygulama (hedef kitle, deger, ilk yil yukleme tahmini), hazirlik (testten sonra ne degisti, hazir olduguna nasil karar verdin). "Daha fazla test" nedenleri: 12'den az testci veya yetersiz testci etkilesimi. Inceleme genelde 7 gun veya daha kisa.
+- Hedef API: 31 Agustos 2026'dan beri API 36 gerekli. Kullandigimiz Bubblewrap sablonu (core 1.27.0) targetSdkVersion 36. UYUMLU (gelecek yilin tarihi sayfada yok).
+- .github/workflows/aab.yml her calismada YENI bir imza anahtari uretiyor; anahtar ve sifresi yalnizca 2 gun saklanan artifact'ta. twa/** altinda bir degisiklik push edilince de kendiliginden calisiyor. twa-manifest appVersionCode 1. Oguzhan'in anahtari indirip saklayip saklamadigini BILMIYORUM.
+- assetlinks.json'da tek parmak izi var; bunun Play uygulama imzalama anahtari mi yukleme anahtari mi oldugunu depodan ANLAYAMIYORUM.
+- TMDB SSS: ticari olmayan kullanim atifla ucretsiz; logo + atif cumlesi "Hakkinda/Kunye" bolumunde olmali. Bizde logo ve Turkce cumle var, JustWatch atfi da var. Cumlenin Ingilizce aslinin zorunlu olup olmadigindan emin degilim.
+- Google gelistirici dogrulamasi (Android Developers Blog, Haziran 2026): Play uygulamalarinin cogu otomatik kaydedildi; kalanlar icin son tarih 30 Eylul 2026. Bizim paket 19 Kasim'da olustu; Play Console'daki durumunu goremiyorum.
+- Testci sayisi, testcilerin kullanimi ve geri bildirimleri depoda YOK. Git gecmisinde testten sonra yapilan duzeltmeler var (cevrimdisi uyari, dokunma alani, yazi boyutu, oyuncu aramasi, gizlilik metni, Kararsizim secim koruma), ama bunlar testci geri bildiriminden degil bizim denetimimizden geldi.
 
 ## Sorular
-1. Statik og:title / og:description / og:image (tek gorsel, depodaki 1024x500 ozellik gorseli olabilir: ai/magaza) eklemek "ozellik" degil gorunmez bir ayar. EKLE mi, EKLEME mi? 1024x500 gorselin WhatsApp onizlemesinde kirpilma riski ve boyut siniri icin kaynak ver ya da "kaynaksiz" yaz.
-2. Onay gununden once (simdi - onay) ne paylasilmali, ne paylasilmamali? Web baglantisiyla kucuk bir cevreye (tanidiklar) sormak yeterli mi, yoksa herkese acik tanitim onaya kadar beklemeli mi? Play kapali test doneminde bunun bir riski var mi (emin degilsen soyle)?
-3. Telefonu ve az zamani olan tek kisi icin onaydan sonraki ilk 7 gunde EN FAZLA 3 eylem sec ve gerisini ele. Her biri icin gercekci beklenti (kac kisi); rakam veremiyorsan "belirsiz" yaz, uydurma.
-4. Forum tanitim kurallari: DonanimHaber/Technopat/Reddit'te gelistiricinin kendi uygulamasini paylasmasina izin var mi? Kesin kaynak ve bolum adi yoksa "emin degilim" yaz. (Technopat'taki ilgili bir konuyu acamadim, kurali dogrulayamadim.)
-5. Analizsiz nasil anlariz hangi paylasim ise yaradi? Sadece Play Console'un kendi trafik kaynagi raporu yeterli mi; magaza baglantisina eklenen utm parametreleri kod eklemeden calisir mi?
+1. Bu listede reddedilme/bozulma riskini buyukten kucuge sirala. Sence atladigim somut bir Play riski var mi (politika adi ver, veremiyorsan "emin degilim")?
+2. Basvuru formundaki "geri bildirim" ve "testten sonra ne degisti" sorulari icin durust cevap nasil kurulur? Testci geri bildirimi azsa ne yapilmali? Uydurma cevap ONERME. Kalan 8 gunde testcilerden istenecek en fazla 2 kisa sey ne olsun?
+3. Yukleme anahtari kaybolduysa gercekte ne olur (Play App Signing, anahtar sifirlama)? Simdi mi bakilmali, ilk guncellemede mi?
+4. Gelistirici dogrulamasi ve assetlinks icin Oguzhan'in telefondan 2 dakikada yapabilecegi kontrol ne?
 
 Not: kisa, en fazla 5 madde, veriyle itiraz et, ilkeyi bozma. Kaynaksiz iddiayi "kaynaksiz" diye isaretle.
