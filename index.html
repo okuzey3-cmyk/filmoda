@@ -110,8 +110,8 @@ h1{font-size:34px;line-height:1.1;margin-bottom:6px}
 .sim small{display:block;margin-top:5px;font-size:13px;line-height:1.25;color:var(--muted)}
 .note{width:100%;margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line);color:var(--text);font:inherit;font-size:15px;resize:none}
 .rx{display:flex;gap:8px;margin-top:12px}
-.onay{margin-top:12px;padding:16px;border-radius:18px;background:var(--surface2);border:1.5px solid var(--accent)}
-.onay p{font-size:15px;line-height:1.45;margin:0 0 12px}
+.onay{margin-top:12px;padding:16px;border-radius:18px;background:var(--surface2);border:1.5px solid var(--line)}
+.onay p{font-size:16px;line-height:1.45;margin:0 0 12px;text-align:center}
 .uyari{position:fixed;left:18px;right:18px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:5;max-width:480px;margin:0 auto;padding:14px 16px;border-radius:16px;background:var(--surface2);border:1.5px solid var(--accent);color:var(--text);font-size:15px;line-height:1.4;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.45)}
 .rx .chip{flex:1;text-align:center}
 .row .nt{font-size:14px;color:var(--muted);margin-top:4px;font-style:italic}
@@ -1023,13 +1023,12 @@ function paylas(d,names){
   },"image/png");
 }
 function ac2(d){detay(d)}
-/* Notu ya da tepkisi olan film listeden cikarilmadan once sorulur. Soru gosterildiyse true doner. */
+/* Notu ya da tepkisi olan film silinmeden once kisaca sorulur. Soru gosterildiyse true doner. */
 function silmeOnayi(k,id,evet){
   var eski=$("onay");if(eski)eski.remove();
   var x=store[k].filter(function(y){return y.id===id})[0];
   if(!x||!(x.n||x.r))return false;
-  var ne=x.n&&x.r?"Notun ve tepkin de":x.n?"Notun da":"Tepkin de";
-  var o=el("div","onay",'<p>Bu filmi listeden çıkarmak istiyor musun? '+ne+' silinecek.</p><div class="btns"><button class="main" id="on-v">Vazgeç</button><button id="on-e">Listeden çıkar</button></div>');
+  var o=el("div","onay",'<p>Silmek istediğine emin misin?</p><div class="btns"><button class="main" id="on-v">Vazgeç</button><button id="on-e">Sil</button></div>');
   o.id="onay";o.setAttribute("role","alertdialog");
   var satirlar=$("sheet").querySelector(".btns.soft");satirlar.parentNode.insertBefore(o,satirlar.nextSibling);
   $("on-v").onclick=function(){o.remove()};
