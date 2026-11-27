@@ -19,7 +19,7 @@ with sync_playwright() as p:
     pg=c.new_page(); errs=[]
     pg.on("pageerror",lambda e:errs.append(str(e)))
     urls=[]; pg.on("request",lambda r: urls.append(r.url) if "discover/movie" in r.url else None)
-    pg.add_init_script("localStorage.setItem('filmoda_intro','1');")
+    pg.add_init_script("localStorage.setItem('filmoda_intro','1');sessionStorage.setItem('filmoda_acilis','1');")
     pg.goto("http://127.0.0.1:8196/index.html"); pg.wait_for_selector("#moods .mood",timeout=20000); pg.wait_for_timeout(900)
     snap(pg,"1-ana")
     pg.click("#plb"); pg.wait_for_timeout(600); snap(pg,"2-panel-bos")

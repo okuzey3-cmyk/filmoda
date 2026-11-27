@@ -37,7 +37,7 @@ async def run():
         b = await p.chromium.launch()
         c = await b.new_context(viewport={"width":360,"height":640}, device_scale_factor=3, is_mobile=True, has_touch=True, locale="tr-TR")
         pg = await c.new_page()
-        await pg.add_init_script("localStorage.setItem('filmoda_intro','1');")
+        await pg.add_init_script("localStorage.setItem('filmoda_intro','1');sessionStorage.setItem('filmoda_acilis','1');")
         cdp = await c.new_cdp_session(pg)
         T0 = time.time()
         async def on_frame(e):

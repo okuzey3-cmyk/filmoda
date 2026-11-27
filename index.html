@@ -191,26 +191,37 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;st
 .hide{display:none!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-.intro{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;transition:opacity .2s}
+.intro{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;transition:opacity .42s ease}
 .intro.out{opacity:0}
+/* arkada yavasca acilan gul rengi hale */
+.intro::before{content:"";position:absolute;left:50%;top:44%;width:130vmin;height:130vmin;transform:translate(-50%,-50%) scale(.55);background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 24%,transparent),transparent 72%);opacity:0;animation:hale 1.5s .05s cubic-bezier(.2,.8,.2,1) forwards;pointer-events:none}
+@keyframes hale{to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 /* ilk acilista ruh hali kartlari sirayla yukselir */
 .moods.giris .mood{animation:kart .45s cubic-bezier(.25,.6,.3,1) .1s backwards}
 .moods.giris .mood:nth-child(2){animation-delay:.17s}.moods.giris .mood:nth-child(3){animation-delay:.24s}.moods.giris .mood:nth-child(4){animation-delay:.31s}.moods.giris .mood:nth-child(5){animation-delay:.38s}
 @keyframes kart{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
-.splash{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
-.splash svg{width:min(52vw,210px);height:auto}
-.splash .fan{transform-origin:50px 82px;transform:rotate(var(--a));animation:open .9s cubic-bezier(.2,.8,.2,1) both}
-.splash .fan.f2{animation-delay:.1s}.splash .fan.f3{animation-delay:.2s}
+.splash{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+.intro.out .splash{transform:translateY(-14px) scale(.94)}
+.splash svg{width:min(52vw,210px);height:auto;animation:yuksel .8s cubic-bezier(.2,.8,.2,1) both}
+@keyframes yuksel{from{opacity:0;transform:translateY(18px) scale(.9)}}
+.splash .fan{transform-origin:50px 82px;transform:rotate(var(--a));animation:open 1s .2s cubic-bezier(.2,.8,.2,1) both}
+.splash .fan.f2{animation-delay:.28s}
 @keyframes open{from{transform:rotate(0deg)}to{transform:rotate(var(--a))}}
-.splash .wm{font-family:var(--display);font-weight:800;font-size:38px;letter-spacing:-.5px;animation:wm .8s .5s both}
-@keyframes wm{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.splash .oy{transform-box:fill-box;transform-origin:center;animation:oy .5s .55s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes oy{from{opacity:0;transform:scale(.3)}}
+.splash .wm{font-family:var(--display);font-weight:800;font-size:38px;letter-spacing:-.5px;text-align:center;animation:aralik 1.3s .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes aralik{from{letter-spacing:5px}}
+.splash .wm span{display:inline-block;animation:harf .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.55s + var(--i) * 45ms)}
+@keyframes harf{from{opacity:0;transform:translateY(14px);filter:blur(6px)}}
+.splash .wm::after{content:"";display:block;height:2px;width:0;margin:12px auto 0;border-radius:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:cizgi .7s .95s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes cizgi{to{width:64%}}
 </style>
 </head>
 <body>
 <div class="glow" id="glow"></div>
 <div class="intro hide" id="intro" aria-hidden="true">
   <div class="splash">
-    <svg viewBox="0 0 100 100"><g class="fan f1" style="--a:-20deg"><rect x="35" y="24" width="30" height="48" rx="5" fill="#8E7A99"/></g><g class="fan f2" style="--a:20deg"><rect x="35" y="24" width="30" height="48" rx="5" fill="#F3E9EE"/></g><g class="fan f3" style="--a:0deg"><rect x="35" y="24" width="30" height="48" rx="5" fill="#E08A9E" stroke="#16111A" stroke-width="2.5"/><polygon points="44,40 44,56 57,48" fill="#16111A" stroke="#16111A" stroke-width="4" stroke-linejoin="round"/></g></svg>
+    <svg viewBox="0 0 100 100"><g class="fan f1" style="--a:-20deg"><rect x="35" y="24" width="30" height="48" rx="5" fill="#8E7A99"/></g><g class="fan f2" style="--a:20deg"><rect x="35" y="24" width="30" height="48" rx="5" fill="#F3E9EE"/></g><g class="fan f3" style="--a:0deg"><rect x="35" y="24" width="30" height="48" rx="5" fill="#E08A9E" stroke="#16111A" stroke-width="2.5"/><polygon class="oy" points="44,40 44,56 57,48" fill="#16111A" stroke="#16111A" stroke-width="4" stroke-linejoin="round"/></g></svg>
     <div class="wm">Filmoda</div>
   </div>
 </div>
@@ -1302,16 +1313,25 @@ setTimeout(platYenile,3000);
     setInterval(bak,30*60000);
   }).catch(function(){})});
 }
-/* Ilk acilis: kisa logo animasyonu, sonra dogrudan ana ekran */
+/* Acilis: uygulama her yeni acildiginda logo animasyonu (yenileyince tekrar oynamaz); dokununca gecer */
 (function(){
   var ov=document.getElementById("intro");if(!ov)return;
-  var done=false;try{done=localStorage.getItem("filmoda_intro")==="1"}catch(e){}
-  /* ?acilis ile gelinirse acilis her seferinde oynar (deneme icin) */
-  if((done&&!/[?&]acilis/.test(location.search))||window._fl)return;
-  try{localStorage.setItem("filmoda_intro","1")}catch(e){}
+  var goruldu=false;try{goruldu=sessionStorage.getItem("filmoda_acilis")==="1"}catch(e){}
+  /* ?acilis ile gelinirse her seferinde oynar (deneme icin) */
+  if((goruldu&&!/[?&]acilis/.test(location.search))||window._fl)return;
+  try{sessionStorage.setItem("filmoda_acilis","1")}catch(e){}
+  var wm=ov.querySelector(".wm");
+  wm.innerHTML="Filmoda".split("").map(function(h,i){return '<span style="--i:'+i+'">'+h+'</span>'}).join("");
   ov.classList.remove("hide");
-  var mw=document.getElementById("moods");
-  setTimeout(function(){ov.classList.add("out");mw.classList.add("giris");setTimeout(function(){ov.classList.add("hide")},200);setTimeout(function(){mw.classList.remove("giris")},900)},1350);
+  var mw=document.getElementById("moods"),bitti=false,t;
+  function bitir(){
+    if(bitti)return;bitti=true;clearTimeout(t);
+    ov.classList.add("out");mw.classList.add("giris");
+    setTimeout(function(){ov.classList.add("hide")},440);
+    setTimeout(function(){mw.classList.remove("giris")},1000);
+  }
+  t=setTimeout(bitir,1750);
+  ov.addEventListener("click",bitir);
 })();
 </script>
 </body>

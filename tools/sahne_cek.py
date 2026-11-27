@@ -14,7 +14,7 @@ def snap(pg, n): pg.screenshot(path=f"{OUT}/{n}.png"); print("ok", n, flush=True
 with sync_playwright() as p:
     b = p.chromium.launch()
     c = b.new_context(viewport={"width": 360, "height": 640}, device_scale_factor=3, is_mobile=True, has_touch=True, locale="tr-TR")
-    pg = c.new_page(); pg.add_init_script("localStorage.setItem('filmoda_intro','1');")
+    pg = c.new_page(); pg.add_init_script("localStorage.setItem('filmoda_intro','1');sessionStorage.setItem('filmoda_acilis','1');")
     pg.goto("http://127.0.0.1:8197/index.html"); pg.wait_for_selector("#moods .mood", timeout=20000); pg.wait_for_timeout(900)
     snap(pg, "ana")
     pg.evaluate("document.querySelectorAll('#moods .mood')[1].click()"); pg.wait_for_timeout(500); snap(pg, "ruh")
