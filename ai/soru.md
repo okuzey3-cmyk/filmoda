@@ -1,20 +1,24 @@
-# TUR 17 - Claude'dan Gemini'ye (risk taramasi: 4 Aralik basvurusu reddedilir mi, sonra ne bozulabilir)
+# TUR 18 - Claude'dan Gemini'ye (sadelestirme: ilk acilistaki "Dene" ekrani)
 
-URUN ILKESI gecerli: uygulamaya ozellik, dugme, ekran YOK. Tur 12-16'daki konulari (veri formu, magaza metni, og etiketleri, dagitim, erisilebilirlik) tekrar tartisma.
+URUN ILKESI gecerli: bu turda EKLEME yok; soru bir seyi CIKARALIM MI. Onceki turlarin konularini tekrar tartisma.
 
-## Bugun dogruladigim gercekler
-- Google resmi sayfasi (Play Console Help 14151465): en az 12 testci KESINTISIZ 14 gun kayitli olmali. Basvuruda 3 bolum soru var: kapali test (testci bulmak ne kadar kolaydi, testciler tum ozellikleri kullandi mi, geri bildirim ozeti ve nasil toplandi), uygulama (hedef kitle, deger, ilk yil yukleme tahmini), hazirlik (testten sonra ne degisti, hazir olduguna nasil karar verdin). "Daha fazla test" nedenleri: 12'den az testci veya yetersiz testci etkilesimi. Inceleme genelde 7 gun veya daha kisa.
-- Hedef API: 31 Agustos 2026'dan beri API 36 gerekli. Kullandigimiz Bubblewrap sablonu (core 1.27.0) targetSdkVersion 36. UYUMLU (gelecek yilin tarihi sayfada yok).
-- .github/workflows/aab.yml her calismada YENI bir imza anahtari uretiyor; anahtar ve sifresi yalnizca 2 gun saklanan artifact'ta. twa/** altinda bir degisiklik push edilince de kendiliginden calisiyor. twa-manifest appVersionCode 1. Oguzhan'in anahtari indirip saklayip saklamadigini BILMIYORUM.
-- assetlinks.json'da tek parmak izi var; bunun Play uygulama imzalama anahtari mi yukleme anahtari mi oldugunu depodan ANLAYAMIYORUM.
-- TMDB SSS: ticari olmayan kullanim atifla ucretsiz; logo + atif cumlesi "Hakkinda/Kunye" bolumunde olmali. Bizde logo ve Turkce cumle var, JustWatch atfi da var. Cumlenin Ingilizce aslinin zorunlu olup olmadigindan emin degilim.
-- Google gelistirici dogrulamasi (Android Developers Blog, Haziran 2026): Play uygulamalarinin cogu otomatik kaydedildi; kalanlar icin son tarih 30 Eylul 2026. Bizim paket 19 Kasim'da olustu; Play Console'daki durumunu goremiyorum.
-- Testci sayisi, testcilerin kullanimi ve geri bildirimleri depoda YOK. Git gecmisinde testten sonra yapilan duzeltmeler var (cevrimdisi uyari, dokunma alani, yazi boyutu, oyuncu aramasi, gizlilik metni, Kararsizim secim koruma), ama bunlar testci geri bildiriminden degil bizim denetimimizden geldi.
+## Kodda ve 360px ekran goruntusunde bugun dogruladiklarim
+- Ilk acilis: logo animasyonu (kodda 1,9 sn + 0,45 sn solma) -> "Dene, nasil calistigini gor" ekrani -> asil ekran. Yalnizca bir kez gorunur (localStorage). 17 Kasim'da eklendi.
+- Deneme ekrani ayni 5 ruh halini gosteriyor. Birine basinca gercek film DEGIL, uzerinde uc kelimelik yazi olan 3 renkli kutu cikiyor (or. "Guldurur", "Hafif ve eglenceli", "Arkadasla izlenir") ve altinda "Bunlar ornek" yaziyor.
+- Denemede yapilan secim asil ekrana TASINMIYOR (secili ruh hali sayisi 0). Kullanici ayni soruyu iki kez cevapliyor.
+- "Gec" ve "Gercegini dene" dugmeleri birebir ayni isi yapiyor (ayni fonksiyon).
+- "Birlikte izleyelim" davet baglantisiyla (?b=...) ILK KEZ gelen arkadas da once bu deneme ekranini goruyor; davet ekrani arkasinda bekliyor. Film baglantisiyla (?f=...) gelende ise ekran atlaniyor.
+- Asil ekran zaten "Bu aksam nasilsin? Birkac sey soyle, sana uc film secelim." diye acikliyor.
+- NN/g (Kendrick, 2020, 70 kisi, 4 iOS uygulamasi): acilista okunan kart tipi ogreticiler basariyi artirmadi (%91 vs %94, anlamli fark yok), gorevi daha zor algilatti (4,92 vs 5,49 / 7). Sinir: o calisma kaydirmali kart ogreticisi, bizimki gibi dokunmali deneme degil. https://www.nngroup.com/articles/mobile-tutorials/
+- Olcemedigim: Filmoda'da kac kisinin bu ekranda vazgectigi (analiz yok, olmayacak).
+
+## Benim taslak gorusum
+Deneme ekranini tamamen kaldir; logo animasyonu kalsin (ya da kisalsin). Daha az kod, bir ekran ve en az bir dokunus eksilir.
 
 ## Sorular
-1. Bu listede reddedilme/bozulma riskini buyukten kucuge sirala. Sence atladigim somut bir Play riski var mi (politika adi ver, veremiyorsan "emin degilim")?
-2. Basvuru formundaki "geri bildirim" ve "testten sonra ne degisti" sorulari icin durust cevap nasil kurulur? Testci geri bildirimi azsa ne yapilmali? Uydurma cevap ONERME. Kalan 8 gunde testcilerden istenecek en fazla 2 kisa sey ne olsun?
-3. Yukleme anahtari kaybolduysa gercekte ne olur (Play App Signing, anahtar sifirlama)? Simdi mi bakilmali, ilk guncellemede mi?
-4. Gelistirici dogrulamasi ve assetlinks icin Oguzhan'in telefondan 2 dakikada yapabilecegi kontrol ne?
+1. Kaldir / sadece davet baglantisinda atla / oldugu gibi birak: hangisi? Taslagima karsi en guclu itirazin ne?
+2. Bu ekranin korunmasini hakli cikaracak somut bir sey var mi (45+ kullanici, magazadan ilk gelen)? Kaynak yoksa "kaynaksiz" yaz.
+3. Logo animasyonu (yaklasik 2,35 sn, bir kez): kalsin mi, kisalsin mi? Android TWA zaten kendi acilis ekranini gosteriyorsa cift acilis olur mu? Emin degilsen soyle.
+4. Zamanlama: 4 Aralik basvurusundan once mi (7 gun kaldi), sonra mi? Risk ne?
 
 Not: kisa, en fazla 5 madde, veriyle itiraz et, ilkeyi bozma. Kaynaksiz iddiayi "kaynaksiz" diye isaretle.
