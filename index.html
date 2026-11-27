@@ -1306,7 +1306,8 @@ setTimeout(platYenile,3000);
 (function(){
   var ov=document.getElementById("intro");if(!ov)return;
   var done=false;try{done=localStorage.getItem("filmoda_intro")==="1"}catch(e){}
-  if(done||window._fl)return;
+  /* ?acilis ile gelinirse acilis her seferinde oynar (deneme icin) */
+  if((done&&!/[?&]acilis/.test(location.search))||window._fl)return;
   try{localStorage.setItem("filmoda_intro","1")}catch(e){}
   ov.classList.remove("hide");
   var mw=document.getElementById("moods");
