@@ -110,6 +110,9 @@ h1{font-size:34px;line-height:1.1;margin-bottom:6px}
 .sim small{display:block;margin-top:5px;font-size:13px;line-height:1.25;color:var(--muted)}
 .note{width:100%;margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line);color:var(--text);font:inherit;font-size:15px;resize:none}
 .rx{display:flex;gap:8px;margin-top:12px}
+.onay{margin-top:12px;padding:16px;border-radius:18px;background:var(--surface2);border:1.5px solid var(--accent)}
+.onay p{font-size:15px;line-height:1.45;margin:0 0 12px}
+.uyari{position:fixed;left:18px;right:18px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:5;max-width:480px;margin:0 auto;padding:14px 16px;border-radius:16px;background:var(--surface2);border:1.5px solid var(--accent);color:var(--text);font-size:15px;line-height:1.4;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.45)}
 .rx .chip{flex:1;text-align:center}
 .row .nt{font-size:14px;color:var(--muted);margin-top:4px;font-style:italic}
 .bak{margin-top:22px;font-size:15px;color:var(--muted)}
@@ -769,9 +772,13 @@ function oneriBasit(){
   });
 }
 function hataSil(){var h=$("hata");if(h)h.remove()}
+/* Kisa uyari: alt menunun ustunde birkac saniye gorunur */
+var uyariT=null;
+function uyariSil(){clearTimeout(uyariT);var u=$("uyari");if(u)u.remove()}
+function uyari(m){uyariSil();var u=el("div","uyari",esc(m));u.id="uyari";u.setAttribute("role","alert");document.body.appendChild(u);uyariT=setTimeout(uyariSil,4000)}
 var gosterNo=0; /* yalnizca en son istenen sonuclari ciz: gec gelen eski cevap yok sayilir */
 function goster(){
-  var no=++gosterNo;
+  var no=++gosterNo;uyariSil();
   (S.cur||[]).forEach(function(c){if(!(S.opened&&S.opened[c.id]))sinyal("sk",c.genre_ids)});S.cur=[];
   var m=moodOf(S.mood);
   $("step1").classList.add("hide");$("step2").classList.remove("hide");window.scrollTo(0,0);
@@ -792,7 +799,7 @@ function goster(){
     var pw=posterEl(f,m.c);pw.appendChild(el("div","badge","★ "+(f.vote_average||0).toFixed(1)));
     var sw=el("span","swap","↻");sw.setAttribute("role","button");sw.setAttribute("aria-label","Bu filmi değiştir");
     sw.onclick=function(e){
-      e.stopPropagation();if(sw.classList.contains("bus"))return;sw.classList.add("bus");
+      e.stopPropagation();if(sw.classList.contains("bus"))return;sw.classList.add("bus");uyariSil();
       var kalan=S.cur.filter(function(x,j){return j!==i});
       oneri({count:1,keep:kalan}).catch(function(){return no===gosterNo?oneriBasit():[]}).then(function(l){
         if(no!==gosterNo)return;
@@ -802,7 +809,11 @@ function goster(){
         reddet(f);gosterildi([n]);
         S.seen.push(n.id);S.cur[i]=n;sonKaydet();
         var y=kart(n,i);c.replaceWith(y);
-      }).catch(function(){sw.classList.remove("bus")});
+      }).catch(function(){
+        sw.classList.remove("bus");
+        /* kullanici hala sonuc ekranindaysa haber ver */
+        if(no===gosterNo&&!$("v-oner").classList.contains("hide"))uyari("Film değiştirilemedi. İnternet bağlantını kontrol et.");
+      });
     };
     pw.appendChild(sw);
     c.appendChild(pw);
@@ -945,11 +956,14 @@ function detay(d){
    (it?(seen?'<div class="rx"><button class="chip" id="rb" aria-pressed="'+(it.r==="b")+'">Beğendim</button><button class="chip" id="rn" aria-pressed="'+(it.r==="n")+'">Beğenmedim</button></div>':'')+'<textarea class="note" id="nt" rows="2" maxlength="200" placeholder="Not ekle (örn. Bunu Ahmet önermişti)">'+esc(it.n||"")+'</textarea>':'')+
    (sim.length?'<div class="label">Benzer filmler</div><div class="sim" id="sim"></div>':'');
   if(tvt&&$("fr"))$("fr").onclick=function(){sinyal("fr",f.g);ogren(d,.8,d);fragman(tvt.key,link,d)};
-  $("ad").onclick=function(){if(!inList("izlenecek",f.id)){sinyal("ad",f.g);ogren(d,1,d)}toggle("izlenecek",f);ac2(d)};
+  $("ad").onclick=function(){
+    function yap(){if(!inList("izlenecek",f.id)){sinyal("ad",f.g);ogren(d,1,d)}toggle("izlenecek",f);ac2(d)}
+    if(!silmeOnayi("izlenecek",f.id,yap))yap()};
   $("iz").onclick=function(){
-    var eski=store.izlenecek.filter(function(x){return x.id===f.id})[0];
+    function yap(){var eski=store.izlenecek.filter(function(x){return x.id===f.id})[0];
     if(!inList("izlendi",f.id)&&eski&&eski.n)f.n=eski.n;
-    toggle("izlendi",f);if(inList("izlendi",f.id)){remove("izlenecek",f.id);izlendiSay(d);ogren(d,.7,d)}ac2(d)};
+    toggle("izlendi",f);if(inList("izlendi",f.id)){remove("izlenecek",f.id);izlendiSay(d);ogren(d,.7,d)}ac2(d)}
+    if(!silmeOnayi("izlendi",f.id,yap))yap()};
   $("pa").onclick=function(){paylas(d,names)};
   if($("nt"))$("nt").onchange=function(){it.n=$("nt").value.trim();if(!it.n)delete it.n;save();renderListe()};
   if($("rb")){
@@ -1009,6 +1023,20 @@ function paylas(d,names){
   },"image/png");
 }
 function ac2(d){detay(d)}
+/* Notu ya da tepkisi olan film listeden cikarilmadan once sorulur. Soru gosterildiyse true doner. */
+function silmeOnayi(k,id,evet){
+  var eski=$("onay");if(eski)eski.remove();
+  var x=store[k].filter(function(y){return y.id===id})[0];
+  if(!x||!(x.n||x.r))return false;
+  var ne=x.n&&x.r?"Notun ve tepkin de":x.n?"Notun da":"Tepkin de";
+  var o=el("div","onay",'<p>Bu filmi listeden çıkarmak istiyor musun? '+ne+' silinecek.</p><div class="btns"><button class="main" id="on-v">Vazgeç</button><button id="on-e">Listeden çıkar</button></div>');
+  o.id="onay";o.setAttribute("role","alertdialog");
+  var satirlar=$("sheet").querySelector(".btns.soft");satirlar.parentNode.insertBefore(o,satirlar.nextSibling);
+  $("on-v").onclick=function(){o.remove()};
+  $("on-e").onclick=evet;
+  o.scrollIntoView({block:"nearest",behavior:"smooth"});
+  return true;
+}
 function remove(k,id){store[k]=store[k].filter(function(x){return x.id!==id});save()}
 function toggle(k,f){if(inList(k,f.id))remove(k,f.id);else{store[k].push(f);save()}}
 function kapat(){
@@ -1140,6 +1168,7 @@ $("t-izlendi").onclick=function(){setTab("izlendi")};
 
 /* Gezinme */
 function view(v){
+  uyariSil();
   ["oner","ara","liste"].forEach(function(k){
     $("v-"+k).classList.toggle("hide",v!==k);
     $("n-"+k).setAttribute("aria-current",v===k?"page":"false");
@@ -1211,7 +1240,7 @@ $("go").onclick=function(){
   S.mode=null;S.mood2=null;goster();
 };
 $("again").onclick=goster;
-$("back").onclick=function(){gosterNo++;modSifirla();$("step2").classList.add("hide");$("step1").classList.remove("hide");$("glow").classList.remove("on");window.scrollTo(0,0)};
+$("back").onclick=function(){gosterNo++;uyariSil();modSifirla();$("step2").classList.add("hide");$("step1").classList.remove("hide");$("glow").classList.remove("on");window.scrollTo(0,0)};
 /* ===== Kararsizim + Birlikte izleyelim ===== */
 function secimSifirla(){
   S.mood=S.sure=S.kim=null;
